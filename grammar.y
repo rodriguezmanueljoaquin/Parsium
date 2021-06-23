@@ -1,12 +1,20 @@
 %{
     #include <stdio.h>
     #include <stdbool.h>
-    #include "grammar.h"
+    #include <ast.h>
+    %extern int yylineno;
+
+    void yyerror(List **tree, char const *s) {
+        fprintf(stderr, "Error in: %s at line %d\n", s, yylineno);
+    }
 %}
 
-%union  {struct Value Value; char Char; char *id; char *String; bool Bool; struct machine *Machine; struct transition *Transition; bool (*)(char) Predicate;}
-%token  <id> identifier/*, parameter, machine_identifier, predicate, state_identifier */
+%union  {struct value Value; char Char; char *id; char *String; bool Bool; struct machine *Machine; struct transition *Transition; bool (*)(char) Predicate;}
+%token IDENT/*, parameter, machine_identifier, predicate, state_identifier */
 %token  <Char> character_value
+%token DEFINE
+%token CHAR BOOL
+%token AND OR EQ NE NOT
 // %token  <String> string
 %token  <Bool> boolean_value
 // %type   <Machine> machine
@@ -27,14 +35,14 @@ operation   :   assignment              {;}
             |   return                  {;}
             ;
 
-declaration :   'def' type identifier   {createEmptySymbol($2, $3);}
+declaration :   DEFINE type IDENT   {createEmptySymbol($2, $3);}
             ;
 
-definition  :   'def' type identifier '=' term     {createSymbol($1, $2, $4);}
+definition  :   DEFINE type IDENT '=' term     {createSymbol($1, $2, $4);}
             // TODO: asignacion a identificadores ya existentes
             ;
 
-assignment  :   identifier '=' term     {updateSymbolVal($1, $3);}
+assignment  :   IDENT '=' term     {updateSymbolVal($1, $3);}
             ;
 
 return      :   'return' boolean_exp    {;}
@@ -63,7 +71,7 @@ term        :   character               {$$ = $1;}
 
 character   :   character_value         {struct charValue = {&($1), CHAR_TYPE}; // ojo, no se pierde la informacion de $1 ?
                                         $$ = charValue;}
-            |   identifier              {$$ = symbolVal($1);}
+            |   IDENT              {$$ = symbolVal($1);}
             ;
 
 boolean_exp :   boolean_exp '||' bool1  {;}
@@ -86,7 +94,7 @@ boolean_term    :   boolean             {;}
 
 boolean     :   boolean_value         {struct boolValue = {&($1), BOOL_TYPE}; // ojo, no se pierde la informacion de $1 ?
                                         $$ = boolValue;}
-            |   identifier              {$$ = symbolVal($1);}
+            |   IDENT              {$$ = symbolVal($1);}
             ;
 
 /* parse       :   'parse' string 'with' machine_identifier  {;}
