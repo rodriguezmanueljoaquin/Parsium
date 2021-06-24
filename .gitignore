@@ -53,3 +53,13 @@ dkms.conf
 
 # IDE
 .vscode
+.idea/
+
+# Lex and YACC 
+lex.yy.c
+y.tab.c
+y.output
+
+y.tab.h
+
+pc

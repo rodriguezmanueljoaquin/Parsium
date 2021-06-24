@@ -1,52 +1,112 @@
 %{
     #include <stdio.h>
     #include <stdbool.h>
-    #include <ast.h>
-    %extern int yylineno;
+    #include "ast.h"
+    #include "linkedlist.h"
+    #include "translate.h"
+    
+    extern int yylineno;
+    int yylex_destroy();
+    int yylex();
 
-    void yyerror(List **tree, char const *s) {
-        fprintf(stderr, "Error in: %s at line %d\n", s, yylineno);
+    int yywrap() {
+	    return 1;
+    }
+
+    void yyerror(LinkedList **tree, char const *s) {
+        fprintf(stderr, "%s at line %d\n", s, yylineno);
     }
 %}
 
-%union  {struct value Value; char Char; char *id; char *String; bool Bool; struct machine *Machine; struct transition *Transition; bool (*)(char) Predicate;}
-%token IDENT/*, parameter, machine_identifier, predicate, state_identifier */
-%token  <Char> character_value
+
+%union  {
+    char character; 
+    char *id; 
+    bool boolean; 
+    ValueType valuetype;
+    // struct machine *Machine; 
+    // struct transition *Transition; 
+    // bool (*)(char) Predicate;
+    Expression *expression;
+    Assignment *assignment;
+    Statement *statement;
+    LinkedList *linkedlist;
+}
+
+%parse-param { LinkedList **tree }
+
+%type <valuetype> type
+%type <expression> term expression
+%type <statement> definition declaration operation statement assignment
+%type <linkedlist> S
+
+%token <id> IDENT/*, parameter, machine_identifier, predicate, state_identifier */
 %token DEFINE
-%token CHAR BOOL
+%token ASSIGN
+/* %token WITH
+%token RETURN */
+%token <character> CHAR
+%token <boolean> BOOL
+%token CHAR_DEF BOOL_DEF
 %token AND OR EQ NE NOT
-// %token  <String> string
-%token  <Bool> boolean_value
+%token PRINT
+
+%right ASSIGN
+%left  OR
+%left  AND
+%left  NOT
+%nonassoc EQ NE
+%nonassoc CHAR_DEF BOOL_DEF
+
 // %type   <Machine> machine
 // %type   <Predicate> new_predicate
-%type   <Value> term, character, boolean
-%start  statement
+%start S
 
 %%
-statement   :   operation ';'           {;}
-            |   statement operation ';'   {;}
+S           :   statement               {*tree = newList();}
+
+statement   :   operation ';'           {addToList(*tree, $1);}
+            |   statement operation ';' {addToList(*tree, $2);}
             |   ';'                     {;}
+            |   statement ';'           {addToList(*tree, $1);}
+            |   assignment ';'          {addToList(*tree, $1);}
             ;
 
-operation   :   assignment              {;}
-            |   'print' term            {printf("%s", $1);}
-            |   definition              {;}
-            |   declaration             {;}
-            |   return                  {;}
+operation   :   PRINT CHAR            	{printf("[DEBUG]]: %c", (unsigned char)$2);}
+            |   definition              {$$ = $1;}
+            |   declaration             {$$ = $1;}
+            /* |   return                  {;} */
             ;
 
-declaration :   DEFINE type IDENT   {createEmptySymbol($2, $3);}
+declaration :   DEFINE type IDENT   {$$ = newDeclaration($2, $3, NULL);}
             ;
 
-definition  :   DEFINE type IDENT '=' term     {createSymbol($1, $2, $4);}
+definition  :   DEFINE type IDENT ASSIGN expression     {$$ = newDeclaration($2, $3, $5);}
             // TODO: asignacion a identificadores ya existentes
             ;
 
-assignment  :   IDENT '=' term     {updateSymbolVal($1, $3);}
+assignment  :   IDENT ASSIGN expression          {$$ = newAssignment($1, $3);}
             ;
 
-return      :   'return' boolean_exp    {;}
+expression  :   expression OR expression    {$$ = newOperation(OR_OP, $1, $3);}
+            |   expression AND expression   {$$ = newOperation(AND_OP, $1, $3);}
+            |   expression EQ expression    {$$ = newOperation(EQ_OP, $1, $3);}
+            |   expression NE expression    {$$ = newOperation(NE_OP, $1, $3);}
+            |   NOT expression              {$$ = newOperation(NOT_OP, $2, NULL);}
+            |   '(' expression ')'          {$$ = newOperation(PARENTHESES_OP, $2, NULL);}
+            |   term                        {$$ = $1;}
             ;
+
+term        :   BOOL                        {$$ = newBool($1);}
+            |   CHAR                        {$$ = newChar($1);}
+            |   IDENT                       {$$ = newSymbol($1);}
+            ;
+
+type        :   BOOL_DEF                    {$$ = BOOL_TYPE;}
+            |   CHAR_DEF                    {$$ = CHAR_TYPE;}
+            ;
+
+/* return      :   'return' boolean_exp    {;} */
 
 /* machine     :   '<' machine_param '>'         {$$ = $1;}
             ; */
@@ -60,42 +120,7 @@ return      :   'return' boolean_exp    {;}
     $$ = predicate;
     }
     ;
-             */
-term        :   character               {$$ = $1;}
-            // |   string                  {$$ = $1;}
-            |   boolean_exp                 {$$ = $1;}
-            // |   machine                 {$$ = $1;}
-            // |   transition              {$$ = $1;}
-            // |   predicate               {$$ = $1;}
-            ; 
-
-character   :   character_value         {struct charValue = {&($1), CHAR_TYPE}; // ojo, no se pierde la informacion de $1 ?
-                                        $$ = charValue;}
-            |   IDENT              {$$ = symbolVal($1);}
-            ;
-
-boolean_exp :   boolean_exp '||' bool1  {;}
-            |   bool1                   {;}
-            /* |   parse                   {;} */
-            ;
-
-bool1       :   bool1 '&&' bool2        {;}
-            |   bool2                   {;}
-            ;
-
-bool2       :   '(' boolean_exp ')'     {;}
-            |   '!' boolean_exp         {;}
-            |   boolean_term            {;}
-            ;
-
-boolean_term    :   boolean             {;}
-            /* |   predicate '(' character ')' {;} */
-            ;
-
-boolean     :   boolean_value         {struct boolValue = {&($1), BOOL_TYPE}; // ojo, no se pierde la informacion de $1 ?
-                                        $$ = boolValue;}
-            |   IDENT              {$$ = symbolVal($1);}
-            ;
+    */
 
 /* parse       :   'parse' string 'with' machine_identifier  {;}
             ; */
@@ -128,38 +153,14 @@ transition  :   state_identifier '->' state_identifier 'when' boolean_exp   {;}
 states_array_elem   :   state_identifier    {;}
             |   state_identifier ','
             |   states_array_elem ',' state_identifier  {;} */
-            ;
-
-type        :   'Machine'               {;}
-            |   'Machine[]'             {;}
-            |   'Predicate'             {;}
-            |   'Predicate[]'           {;}
-            |   'Bool'                  {;}
-            |   'Bool[]'                {;}
-            |   'Char'                  {;}
-            |   'Char[]'                {;}
-            |   'Transition'            {;}
-            |   'Transition[]'          {;}
-            |   'String'                {;}
-            |   'String[]'              {;}
-            |   'State'                 {;}
-            |   'State[]'               {;}
-            ;
             
 %%
 
 int main(int argc, char *argv[]) {
-    yyparse();
-}
-
-void createEmptySymbol(char *typeStr, char *identifier) {
-    
-}
-
-void createSymbol(char *typeStr, char *identifier, Value val) {
-    
-}
-
-void symbolVal(char *identifier) {
-
+    LinkedList *tree = NULL;
+    yyparse(&tree);
+    yylex_destroy();
+    if(tree != NULL)
+        translate(tree);
+    return 0;
 }

@@ -1,6 +1,9 @@
 
 %{
     #include <string.h>
+    #include <stdbool.h>
+    #include "ast.h"
+    #include "y.tab.h"
 %}
 
 %option yylineno
@@ -11,12 +14,16 @@
 \/\/.*\n?
 [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 [/][*]				            { yy_fatal_error("Unterminated comment"); }
-
-Char                            return CHAR;
-Bool                            return BOOL;
+Char                            return CHAR_TYPE;
+Bool                            return BOOL_TYPE;
 def                             return DEFINE;
-with                            return WITH;
-return                          return RETURN;
+%{
+// with                            return WITH;
+// return                          return RETURN;
+%}
+print                           return PRINT;
+true                            { yylval.boolean = true; return BOOL;}
+false                           { yylval.boolean = false; return BOOL;}
 
 =                               return ASSIGN;
 \|\|                            return OR;
@@ -24,14 +31,10 @@ return                          return RETURN;
 ==                              return EQ;
 !=                              return NE;
 
-true                            return TRUE;
-false                           return FALSE;
 !                               return NOT;
 
 [_A-Za-z]([_A-Za-z]|[0-9])*		{ yylval.id = strdup(yytext); return IDENT; }
-'.'                             { yylval.Value.valType = CHAR_TYPE; yylval.Value.valPtr = (void *)strndup(&yytext[1], 1);}
-true                            { yylval.Value.valType = BOOL_TYPE; yylval.Value.valPtr = }
-false                           
+'.'                             { yylval.character = yytext[1]; return CHAR;}
 .                               return yytext[0];
 
 %%

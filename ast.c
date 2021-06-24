@@ -1,4 +1,4 @@
-#include <ast.h>
+#include "ast.h"
 #include <stdlib.h>
 
 Expression *newSymbol(char *identifier) {
@@ -15,7 +15,7 @@ Expression *newChar(char c) {
 	char *value = malloc(sizeof(char));
 	*value = c;
 	expression->type = CHAR_TYPE;
-	expression->op = SYMBOL_OP;
+	expression->op = CONST_OP;
 	expression->value = value;
 
 	return expression;
@@ -26,7 +26,7 @@ Expression *newBool(bool b) {
 	bool *value = malloc(sizeof(bool));
 	*value = b;
 	expression->type = BOOL_TYPE;
-	expression->op = SYMBOL_OP;
+	expression->op = CONST_OP;
 	expression->value = value;
 
 	return expression;
@@ -62,26 +62,29 @@ Expression *newOperation(OperationType op, Expression *exp1, Expression *exp2) {
 
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative) {
 	Statement *statement = malloc(sizeof(Statement));
-	statement->conditional->condition = condition;
-	statement->conditional->affirmative = affirmative;
-	statement->conditional->negative = negative;
+	statement->data.conditional = malloc(sizeof(Conditional));
+	statement->data.conditional->condition = condition;
+	statement->data.conditional->affirmative = affirmative;
+	statement->data.conditional->negative = negative;
 	statement->type = CONDITIONAL_STMT;
 	return statement;
 }
 
 Statement *newAssignment(char *symbol, Expression *value) {
 	Statement *statement = malloc(sizeof(Statement));
-	statement->assignment->symbol = symbol;
-	statement->assignment->value = value;
+	statement->data.assignment = malloc(sizeof(Assignment));
+	statement->data.assignment->symbol = symbol;
+	statement->data.assignment->value = value;
 	statement->type = ASSIGN_STMT;
 	return statement;
 }
 
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 	Statement *statement = malloc(sizeof(Statement));
-	statement->declaration->type = type;
-	statement->declaration->symbol = symbol;
-	statement->declaration->value = value;
+	statement->data.declaration = malloc(sizeof(Declaration));
+	statement->data.declaration->type = type;
+	statement->data.declaration->symbol = symbol;
+	statement->data.declaration->value = value;
 	statement->type = DECLARE_STMT;
 	return statement;
 }
@@ -90,7 +93,7 @@ Statement *newLoop(); // TODO: Hacer xd
 
 Statement *newBlock(LinkedList *list) {
 	Statement *statement = malloc(sizeof(Statement));
-	statement->statements = list;
+	statement->data.statements = list;
 	statement->type = BLOCK_STMT;
 	return statement;
 }

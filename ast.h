@@ -2,10 +2,10 @@
 
 #define AST_H
 
-#include <linkedlist.h>
+#include "linkedlist.h"
 #include <stdbool.h>
 
-typedef enum { AND_OP, OR_OP, NOT_OP, EQ_OP, NE_OP, PARENTHESES_OP, EXEC_OP, SYMBOL_OP } OperationType;
+typedef enum { AND_OP, OR_OP, NOT_OP, EQ_OP, NE_OP, PARENTHESES_OP, EXEC_OP, SYMBOL_OP, CONST_OP } OperationType;
 
 typedef enum { CONDITIONAL_STMT, LOOP_STMT, ASSIGN_STMT, DECLARE_STMT, BREAK_STMT, RETURN_STMT, BLOCK_STMT } StatementType;
 
@@ -43,27 +43,27 @@ typedef struct Assignment {
 	Expression *value;
 } Assignment;
 
-typedef struct Loop {
-	// para despues, deberia recibir una coleccion, tener un statement, y una variable del elemento actual
-} Loop;
+// typedef struct Loop {
+// 	// para despues, deberia recibir una coleccion, tener un statement, y una variable del elemento actual
+// } Loop;
 
 typedef struct Declaration {
-	ValueType type;
 	char *symbol;
+	ValueType type;
 	Expression *value;
 } Declaration;
 
 /* Statement nodes para AST */
-typedef struct Statement {
+struct Statement {
 	StatementType type;
-	union {
+	union data {
 		Conditional *conditional;
 		Assignment *assignment;
-		Loop *loop;
+		// Loop *loop;
 		Declaration *declaration;
 		LinkedList *statements;
-	};
-} Statement;
+	} data;
+};
 
 Expression *newSymbol(char *identifier);
 Expression *newChar(char c);

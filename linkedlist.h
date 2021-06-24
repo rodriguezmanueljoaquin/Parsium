@@ -4,11 +4,15 @@
 
 typedef struct Node {
 	void *value;
-	Node *next;
+	struct Node *next;
 } Node;
 
 typedef struct LinkedList {
 	Node *first, *last;
 } LinkedList;
+
+LinkedList *newList();
+
+void addToList(LinkedList *list, void *data);
 
 #endif
