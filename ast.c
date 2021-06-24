@@ -32,6 +32,15 @@ Expression *newBool(bool b) {
 	return expression;
 }
 
+Expression *newArray(LinkedList *list, ValueType type) {
+	Expression *expression = malloc(sizeof(Expression));
+	expression->type = type;
+	expression->op = CONST_OP;
+	expression->value = list;
+
+	return expression;
+}
+
 Expression *newOperation(OperationType op, Expression *exp1, Expression *exp2) {
 	ValueType expType;
 
@@ -74,7 +83,7 @@ Statement *newAssignment(char *symbol, Expression *value) {
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.assignment = malloc(sizeof(Assignment));
 	statement->data.assignment->symbol = symbol;
-	statement->data.assignment->value = value;
+	statement->data.assignment->expression = value;
 	statement->type = ASSIGN_STMT;
 	return statement;
 }

@@ -40,7 +40,7 @@ typedef struct Conditional {
 
 typedef struct Assignment {
 	char *symbol;
-	Expression *value;
+	Expression *expression;
 } Assignment;
 
 // typedef struct Loop {
@@ -68,6 +68,7 @@ struct Statement {
 Expression *newSymbol(char *identifier);
 Expression *newChar(char c);
 Expression *newBool(bool b);
+Expression *newArray(LinkedList *list, ValueType type);
 Expression *newOperation(OperationType op, Expression *exp1, Expression *exp2);
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative);
 Statement *newAssignment(char *symbol, Expression *value);

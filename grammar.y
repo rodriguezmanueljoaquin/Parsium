@@ -36,18 +36,18 @@
 %parse-param { LinkedList **tree }
 
 %type <valuetype> type
-%type <expression> term expression
+%type <expression> term expression array
 %type <statement> definition declaration operation statement assignment
-%type <linkedlist> S
+%type <linkedlist> S char_array_elem char_array
 
-%token <id> IDENT/*, parameter, machine_identifier, predicate, state_identifier */
+%token <id> IDENT
 %token DEFINE
 %token ASSIGN
 /* %token WITH
 %token RETURN */
 %token <character> CHAR
 %token <boolean> BOOL
-%token CHAR_DEF BOOL_DEF
+%token CHAR_DEF BOOL_DEF CHAR_ARRAY_DEF
 %token AND OR EQ NE NOT
 %token PRINT
 
@@ -93,6 +93,7 @@ expression  :   expression OR expression    {$$ = newOperation(OR_OP, $1, $3);}
             |   expression NE expression    {$$ = newOperation(NE_OP, $1, $3);}
             |   NOT expression              {$$ = newOperation(NOT_OP, $2, NULL);}
             |   '(' expression ')'          {$$ = newOperation(PARENTHESES_OP, $2, NULL);}
+			|	array						{$$ = $1;}
             |   term                        {$$ = $1;}
             ;
 
@@ -103,6 +104,17 @@ term        :   BOOL                        {$$ = newBool($1);}
 
 type        :   BOOL_DEF                    {$$ = BOOL_TYPE;}
             |   CHAR_DEF                    {$$ = CHAR_TYPE;}
+            |   CHAR_ARRAY_DEF              {$$ = CHAR_ARRAY_TYPE;}
+			;
+
+array		:	char_array					{$$ = newArray($1, CHAR_ARRAY_TYPE);}
+
+char_array  :  '[' char_array_elem ']'      {$$ = $2;}
+            ;
+
+char_array_elem :   term               				{$$ = newList(); addToList($$, $1);}
+            |   char_array_elem ',' term    		{addToList($$,$3);}
+            ;
             ;
 
 /* return      :   'return' boolean_exp    {;} */
@@ -122,15 +134,7 @@ type        :   BOOL_DEF                    {$$ = BOOL_TYPE;}
     */
 
 /* parse       :   'parse' string 'with' machine_identifier  {;}
-            ; */
-
-/* char_array  :   '[' char_array ']'      {;}
-            ;
-
-char_array_elem :   character               {;}
-            |   character ','                {;}
-            |   character ',' char_array_elem    {;}
-            ;
+            ; 
 
 transition_array    :   '[' transition_array_elem ']'   {;}
             ;
