@@ -1,7 +1,7 @@
-#include "translate.h"
-#include "ast.h"
+#include <ast.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <translate.h>
 
 static void translateStatement(Statement *statement);
 static void translateDeclaration(Declaration *declaration);
@@ -14,7 +14,6 @@ void translate(LinkedList *list) {
 	Node *current = list->first;
 	printf("int main() {\n");
 	while (current != NULL) {
-		printf("El Beto");
 		fflush(stdout);
 		translateStatement((Statement *)current->value);
 		current = current->next;
@@ -32,11 +31,11 @@ static void translateStatement(Statement *statement) {
 			break;
 		case ASSIGN_STMT:
 			translateAssignment(statement->data.assignment);
-			printf(";");
+			putchar(';');
 			break;
 		case DECLARE_STMT:
 			translateDeclaration(statement->data.declaration);
-			printf(";");
+			putchar(';');
 			break;
 		case BREAK_STMT:
 		case RETURN_STMT:
@@ -45,6 +44,7 @@ static void translateStatement(Statement *statement) {
 		default:
 			break;
 	}
+	putchar('\n');
 }
 
 static void translateDeclaration(Declaration *declaration) {
@@ -77,7 +77,7 @@ static void translateDeclaration(Declaration *declaration) {
 			// TODO: hacer
 			break;
 		default:
-			printf("\nvsdsis\n");
+			printf("\n error translateDeclaration() \n");
 			break;
 	}
 	printf("%s = ", declaration->symbol);
@@ -95,7 +95,7 @@ static void translateConditional(Conditional *conditional) {
 		translateStatement(conditional->negative);
 	}
 
-	printf("}\n");
+	printf("}");
 }
 
 static void translateAssignment(Assignment *assignment) {
@@ -151,7 +151,7 @@ static void translateExpression(Expression *expression) {
 static void translateConstant(ValueType type, void *value) {
 	switch (type) {
 		case CHAR_TYPE:
-			printf("%c", *(char *)value);
+			printf("'%c'", *(char *)value);
 			break;
 		case BOOL_TYPE:
 			printf("%s", *(bool *)value ? "true" : "false");

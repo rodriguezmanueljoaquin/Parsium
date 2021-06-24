@@ -2,7 +2,7 @@
 
 #define AST_H
 
-#include "linkedlist.h"
+#include <linkedlist.h>
 #include <stdbool.h>
 
 typedef enum { AND_OP, OR_OP, NOT_OP, EQ_OP, NE_OP, PARENTHESES_OP, EXEC_OP, SYMBOL_OP, CONST_OP } OperationType;

@@ -1,12 +1,14 @@
-CFLAGS= -std=gnu99 -pedantic -pedantic-errors -Wall -Wextra  -Wno-unused-parameter -Wno-implicit-fallthrough -g
+CFLAGS= -std=gnu99 -pedantic -pedantic-errors -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -Wno-implicit-fallthrough -g
 YFLAGS= -v -d
 LLFLAG= -ll
 
-YACC_SOURCE=grammar.y
-LEX_SOURCE=lexer.l
-COMPILER_OBJECTS= lex.yy.o y.tab.o linkedlist.o ast.o translate.o
+LEX_SOURCE= lexer.l
+YACC_SOURCE= grammar.y
+C_SOURCES= translate.c linkedlist.c ast.c lex.yy.c y.tab.c
 
-all: lexgrammar yaccgrammar compiler
+all: lexgrammar  yaccgrammar compiler
+
+fsanitize: lexgrammar yaccgrammar compiler_fsanitize
 
 lexgrammar: $(LEX_SOURCE)
 	$(LEX) $(LFLAGS) $^
@@ -14,20 +16,13 @@ lexgrammar: $(LEX_SOURCE)
 yaccgrammar: $(YACC_SOURCE)
 	$(YACC) $(YFLAGS) $^
 
-compiler: $(COMPILER_OBJECTS)
-	$(CC) -o pc $^ $(LYFLAG) -fsanitize=address
+compiler:
+	$(CC) $(CFLAGS) -I./include $(C_SOURCES) $(LYFLAG) -o pc
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# FIXME
-lex.yy.o: lex.yy.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-y.tab.o: y.tab.c
-	$(CC) $(CFLAGS) -c $< -o $@
+compiler_fsanitize:
+	$(CC) $(CFLAGS) -I./include $(C_SOURCES) $(LYFLAG) -fsanitize=address -o pc
 
 clean:
-	rm -rf pc *.o lex.yy.c y.tab.c y.output y.tab.h 
+	rm -rf pc *.o lex.yy.c y.output y.tab.c y.tab.h 
 
-.PHONY: all clean
+.PHONY: all fsanitize clean

@@ -1,4 +1,4 @@
-#include "ast.h"
+#include <ast.h>
 #include <stdlib.h>
 
 Expression *newSymbol(char *identifier) {

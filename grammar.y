@@ -1,9 +1,9 @@
 %{
     #include <stdio.h>
     #include <stdbool.h>
-    #include "ast.h"
-    #include "linkedlist.h"
-    #include "translate.h"
+    #include <ast.h>
+    #include <linkedlist.h>
+    #include <translate.h>
     
     extern int yylineno;
     int yylex_destroy();
@@ -63,29 +63,28 @@
 %start S
 
 %%
-S           :   statement               {*tree = newList();}
 
-statement   :   operation ';'           {addToList(*tree, $1);}
-            |   statement operation ';' {addToList(*tree, $2);}
-            |   ';'                     {;}
-            |   statement ';'           {addToList(*tree, $1);}
-            |   assignment ';'          {addToList(*tree, $1);}
+S           :   S statement                 {;}
+            |   /*empty*/                   {*tree = newList();}
+
+statement   :   operation ';'               {addToList(*tree, $1);}
+            |   ';'                         {;}
+            |   assignment ';'              {addToList(*tree, $1);}
             ;
 
-operation   :   PRINT CHAR            	{printf("[DEBUG]]: %c", (unsigned char)$2);}
-            |   definition              {$$ = $1;}
-            |   declaration             {$$ = $1;}
+operation   :   PRINT CHAR            	    {printf("// [DEBUG]: %c\n", (unsigned char)$2);}
+            |   definition                  {$$ = $1;}
+            |   declaration                 {$$ = $1;}
             /* |   return                  {;} */
             ;
 
-declaration :   DEFINE type IDENT   {$$ = newDeclaration($2, $3, NULL);}
+declaration :   DEFINE type IDENT           {$$ = newDeclaration($2, $3, NULL);}
             ;
 
 definition  :   DEFINE type IDENT ASSIGN expression     {$$ = newDeclaration($2, $3, $5);}
-            // TODO: asignacion a identificadores ya existentes
             ;
 
-assignment  :   IDENT ASSIGN expression          {$$ = newAssignment($1, $3);}
+assignment  :   IDENT ASSIGN expression     {$$ = newAssignment($1, $3);}
             ;
 
 expression  :   expression OR expression    {$$ = newOperation(OR_OP, $1, $3);}

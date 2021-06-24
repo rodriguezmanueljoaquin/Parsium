@@ -2,7 +2,7 @@
 %{
     #include <string.h>
     #include <stdbool.h>
-    #include "ast.h"
+    #include <ast.h>
     #include "y.tab.h"
 %}
 
@@ -14,8 +14,8 @@
 \/\/.*\n?
 [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 [/][*]				            { yy_fatal_error("Unterminated comment"); }
-Char                            return CHAR_TYPE;
-Bool                            return BOOL_TYPE;
+Char                            return CHAR_DEF;
+Bool                            return BOOL_DEF;
 def                             return DEFINE;
 %{
 // with                            return WITH;
