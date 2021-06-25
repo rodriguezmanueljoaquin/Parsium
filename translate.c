@@ -82,9 +82,12 @@ static void translateStatement(Statement *statement) {
 			translateDeclaration(statement->data.declaration);
 			putchar(';');
 			break;
+		case PARSE_STMT:
+			printIndentation();
+			printf("run_machine_%s(\"%s\");", statement->data.parse->machineSymbol, statement->data.parse->string);
+			break;
 		case BREAK_STMT:
 		case RETURN_STMT:
-			break;
 		case BLOCK_STMT:
 		default:
 			break;
@@ -106,7 +109,6 @@ static void translateDeclaration(Declaration *declaration) {
 			printf("char *");
 			break;
 		case MACHINE_TYPE:
-			printf("run_machine_%s()", declaration->symbol);
 			return;
 		case PREDICATE_TYPE:
 			// TODO: hacer
@@ -373,11 +375,9 @@ static void translateMachineParser(char *machineSymbol) {
 
 static void translateMachineExecutionFunction(LinkedList *machineStates, char *machineSymbol) {
 	printIndentation();
-	printf("bool run_machine_%s() {\n", machineSymbol);
+	printf("bool run_machine_%s(char *parse) {\n", machineSymbol);
 
 	indentationLevel++;
-	printIndentation();
-	printf("char *parse = \"%s\";\n", "ab");
 	printIndentation();
 	// FIXME: QUE PASA SI NO HAY NODOS?
 	printf("parser_state_%s current_state = PS_%s_%s;\n", machineSymbol, machineSymbol,

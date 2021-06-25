@@ -3,6 +3,7 @@
     #include <string.h>
     #include <stdbool.h>
     #include <ast.h>
+    #include <stdio.h>
     #include "y.tab.h"
 %}
 
@@ -20,7 +21,6 @@ Bool                            	return BOOL_DEF;
 def                             	return DEFINE;
 Machine							    return MACHINE_DEF;
 %{
-// with                            return WITH;
 // return                          return RETURN;
 %}
 transitions                         return TRANSITIONS_DEF;
@@ -30,6 +30,8 @@ print                           	return PRINT;
 true                            	{ yylval.boolean = true; return BOOL;}
 false                           	{ yylval.boolean = false; return BOOL;}
 when                                return WHEN;
+parse                               return PARSE;
+with                                return WITH;
 
 ->                                  return ARROW;
 
@@ -42,7 +44,8 @@ when                                return WHEN;
 
 !                               	return NOT;
 
-[_A-Za-z]([_A-Za-z]|[0-9])*			{ yylval.id = strdup(yytext); return IDENT; }
+\"([^\\\"]|\\.)*\"                  { yylval.string = strndup(&yytext[1], yyleng - 1); yylval.string[yyleng-2] = 0; return STRING; }
+[_A-Za-z]([_A-Za-z]|[0-9])*			{ yylval.string = strdup(yytext); return IDENT; }
 '.'                             	{ yylval.character = yytext[1]; return CHAR;}
 .                               	return yytext[0];
 

@@ -22,7 +22,7 @@
 
 %union  {
     char character; 
-    char *id; 
+    char *string; 
     bool boolean; 
     ValueType valuetype;
     // struct machine *Machine; 
@@ -43,7 +43,7 @@
 %type <linkedlist> S char_array_elem char_array transition_array_elem transition_array ident_array_elem ident_array
 %type <transitiontype> transition
 
-%token <id> IDENT
+%token <string> IDENT STRING
 %token DEFINE
 %token ASSIGN
 /* %token WITH
@@ -54,7 +54,7 @@
 %token AND OR EQ NE NOT
 %token PRINT
 %token ARROW
-%token WHEN
+%token WHEN PARSE WITH
 
 %right ASSIGN
 %left  OR
@@ -70,32 +70,39 @@
 S           :   S statement                             {;}
             |   /*empty*/                               {args[TREE_LIST] = newList(); args[MACHINE_LIST] = newList();}
 
-statement   :   operation ';'                           {addToList(args[TREE_LIST], $1);}
+statement   :   operation ';'                           {if($1 != NULL) addToList(args[TREE_LIST], $1);}
             |   ';'                                     {;}
             |   assignment ';'                          {addToList(args[TREE_LIST], $1);}
             ;
 
 operation   :   PRINT CHAR            	                {printf("// [DEBUG]: %c\n", (unsigned char)$2);}
-            |   definition                              {$$ = $1;}
             |   declaration                             {$$ = $1;}
+            |   definition                              {$$ = $1;}
+            |   PARSE STRING WITH IDENT                 {$$ = newParseStatement($2, $4);}
             /* |   return                  {;} */
             ;
 
 declaration :   DEFINE type IDENT                       {$$ = newDeclaration($2, $3, NULL);}
             ;
 
-definition  :   DEFINE type IDENT ASSIGN expression     {$$ = newDeclaration($2, $3, $5); if($2 == MACHINE_TYPE) addToList(args[MACHINE_LIST], $$);}    //agrego machine a tree tambien? no es innecesario?
+definition  :   DEFINE type IDENT ASSIGN expression     {
+                                                            $$ = newDeclaration($2, $3, $5); 
+                                                            if($2 == MACHINE_TYPE) {
+                                                                addToList(args[MACHINE_LIST], $$); 
+                                                                $$ = NULL; // para que no se guarde en TREE_LIST
+                                                            }
+                                                        }
             ;
 
 assignment  :   IDENT ASSIGN expression                 {$$ = newAssignment($1, $3);}
             ;
 
-expression  :   expression OR expression                {$$ = newOperation(OR_OP, $1, $3);}
-            |   expression AND expression               {$$ = newOperation(AND_OP, $1, $3);}
-            |   expression EQ expression                {$$ = newOperation(EQ_OP, $1, $3);}
-            |   expression NE expression                {$$ = newOperation(NE_OP, $1, $3);}
-            |   NOT expression                          {$$ = newOperation(NOT_OP, $2, NULL);}
-            |   '(' expression ')'                      {$$ = newOperation(PARENTHESES_OP, $2, NULL);}
+expression  :   expression OR expression                {$$ = newExpression(OR_OP, $1, $3);}
+            |   expression AND expression               {$$ = newExpression(AND_OP, $1, $3);}
+            |   expression EQ expression                {$$ = newExpression(EQ_OP, $1, $3);}
+            |   expression NE expression                {$$ = newExpression(NE_OP, $1, $3);}
+            |   NOT expression                          {$$ = newExpression(NOT_OP, $2, NULL);}
+            |   '(' expression ')'                      {$$ = newExpression(PARENTHESES_OP, $2, NULL);}
 			|	array						            {$$ = $1;}
             |   machine                                 {$$ = $1;}
             |   term                                    {$$ = $1;}
@@ -104,6 +111,7 @@ expression  :   expression OR expression                {$$ = newOperation(OR_OP
 term        :   BOOL                                    {$$ = newBool($1);}
             |   CHAR                                    {$$ = newChar($1);}
             |   IDENT                                   {$$ = newSymbol($1);}
+            |   STRING                                  {$$ = newSymbol($1);}
             ;
 
 type        :   BOOL_DEF                                {$$ = BOOL_TYPE;}
@@ -153,9 +161,6 @@ ident_array_elem   :   IDENT                            {$$ = newList(); addToLi
     ;
     */
 
-/* parse       :   'parse' string 'with' machine_identifier  {;}
-            ; 
-*/
 %%
 
 int main(int argc, char *argv[]) {

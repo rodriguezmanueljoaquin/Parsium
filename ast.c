@@ -65,7 +65,7 @@ Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *
 	return expression;
 }
 
-Expression *newOperation(OperationType op, Expression *exp1, Expression *exp2) {
+Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) {
 	ValueType expType;
 
 	switch (op) {
@@ -128,5 +128,14 @@ Statement *newBlock(LinkedList *list) {
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.statements = list;
 	statement->type = BLOCK_STMT;
+	return statement;
+}
+
+Statement *newParseStatement(char *string, char *machineSymbol) {
+	Statement *statement = malloc(sizeof(Statement));
+	statement->data.parse = malloc(sizeof(ParseData));
+	statement->type = PARSE_STMT;
+	statement->data.parse->machineSymbol = machineSymbol; 
+	statement->data.parse->string = string; 
 	return statement;
 }
