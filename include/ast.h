@@ -41,7 +41,7 @@ typedef struct TransitionType {
 typedef struct MachineType {
 	LinkedList *transitions;
 	char *initialState;
-	LinkedList *finalStates;
+	LinkedList *finalStates;		//lista de simbolos
 } MachineType;
 
 typedef struct Conditional {
