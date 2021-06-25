@@ -4,7 +4,7 @@ LLFLAG= -ll
 
 LEX_SOURCE= lexer.l
 YACC_SOURCE= grammar.y
-C_SOURCES= translate.c linkedlist.c ast.c lex.yy.c y.tab.c
+C_SOURCES= translate.c linkedlist.c ast.c lex.yy.c y.tab.c machinestate.c
 
 all: lexgrammar  yaccgrammar compiler
 

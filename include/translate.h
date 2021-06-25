@@ -6,10 +6,4 @@
 
 void translate(LinkedList *ast, LinkedList *machines);
 
-typedef struct MachineState {
-	char *symbol;
-	LinkedList *transitions;
-	size_t transitionSize;
-} MachineState;
-
 #endif
