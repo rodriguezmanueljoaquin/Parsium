@@ -125,7 +125,16 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 	return statement;
 }
 
-Statement *newLoop(); // TODO: Hacer xd
+Statement *newLoop(Expression *condition, Statement *block, char *init, char *increment){
+	Statement *statement = malloc(sizeof(Statement));
+	statement->type = LOOP_STMT;
+	statement->data.loop = malloc(sizeof(Loop));
+	statement->data.loop->condition = condition;
+	statement->data.loop->block = block;
+	statement->data.loop->init = init;
+	statement->data.loop->increment = increment;
+	return statement;
+}
 
 Statement *newStatement(StatementType type, Expression *expression) {
 	Statement *statement = malloc(sizeof(Statement));

@@ -16,7 +16,8 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 static void translateMachineStructs(Node *firstState, char *machineSymbol);
 static void translateMachineParser(char *machineSymbol);
 static void translateMachineExecutionFunction(LinkedList *machineStates, char *machineSymbol);
-static void translateBlock(LinkedList *statements);
+static void translateBlock(Statement *block);
+static void translateLoop(Loop *loop);
 
 static size_t indentationLevel = 0;
 
@@ -72,7 +73,7 @@ static void translateStatement(Statement *statement) {
 			translateConditional(statement->data.conditional);
 			break;
 		case LOOP_STMT:
-			// TODO: Hacer
+			translateLoop(statement->data.loop);
 			break;
 		case ASSIGN_STMT:
 			translateAssignment(statement->data.assignment);
@@ -96,7 +97,7 @@ static void translateStatement(Statement *statement) {
 			printIndentation();
 			break;
 		case BLOCK_STMT:
-			translateBlock(statement->data.statements);
+			translateBlock(statement);
 			break;
 		default:
 			break;
@@ -104,8 +105,16 @@ static void translateStatement(Statement *statement) {
 	putchar('\n');
 }
 
-static void translateBlock(LinkedList *statements) {
-	Node *statement = statements->first;
+static void translateLoop(Loop *loop){
+	printIndentation();
+	printf("for( %s ; ", loop->init);
+	translateExpression(loop->condition);
+	printf(" ; %s )", loop->increment);
+	translateBlock(loop->block);
+}
+
+static void translateBlock(Statement *block) {
+	Node *statement = block->data.statements->first;
 	printIndentation();
 	printf("{\n");
 	indentationLevel++;

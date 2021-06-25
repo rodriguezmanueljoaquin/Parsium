@@ -56,7 +56,7 @@
 %token RETURN
 %token ARROW
 %token WHEN PARSE WITH
-%token IF ELSE
+%token IF ELSE FOR WHILE
 
 %right ASSIGN
 %left  OR
@@ -83,6 +83,7 @@ statement   :   operation ';'                           {$$ = $1;}
             |   expression ';'                          {$$ = newStatement(EXPRESSION_STMT, $1);}
 			|	IF '(' expression ')' block ELSE block  {$$ = newConditional($3, $5, $7);}
 			|	IF '(' expression ')' block             {$$ = newConditional($3, $5, NULL);}
+            |   WHILE '(' expression ')' block          {$$ = newLoop($3, $5, "\0", "\0");}
             ;
 
 block       :   '{' statement_list '}'					{$$ = newBlock($2);}

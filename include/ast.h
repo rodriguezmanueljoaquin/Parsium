@@ -66,18 +66,20 @@ typedef struct Declaration {
 	Expression *value;
 } Declaration;
 
-typedef struct ParseData {
-	char *machineSymbol;
-	char *string;
-} ParseData;
-		
+typedef struct Loop {
+	Expression *condition;
+	Statement *block;
+	char *init;
+	char *increment;
+} Loop;
+
 /* Statement nodes para AST */
 struct Statement {
 	StatementType type;
 	union data {
 		Conditional *conditional;
 		Assignment *assignment;
-		// Loop *loop;
+		Loop *loop;
 		Declaration *declaration;
 		Expression *expression;
 		LinkedList *statements;
@@ -94,7 +96,7 @@ TransitionType *newTransition(char *fromState, char *toState, Expression *when);
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative);
 Statement *newAssignment(char *symbol, Expression *value);
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value);
-Statement *newLoop(); // TODO: Hacer xd
+Statement *newLoop(Expression *condition, Statement *block, char *init, char *increment);
 Statement *newStatement(StatementType type, Expression* expression);
 Statement *newBlock(LinkedList *statementList);
 

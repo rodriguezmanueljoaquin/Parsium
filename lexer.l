@@ -34,6 +34,8 @@ with                                return WITH;
 return                              return RETURN;
 if                                  return IF;
 else                                return ELSE;
+for                                 return FOR;
+while                               return WHILE;
 
 ->                                  return ARROW;
 
