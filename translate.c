@@ -206,8 +206,8 @@ static void translateMachineDefinitions(LinkedList *machines) {
 
 		printIndentation();
 		// FIXME: ESTADOS FINALES
-		printf("printf(\"%%s is %%s by the machine\\n\", parse, current_state == PS_%s_%s ? \"accepted\" : \"rejected\");\n\n",
-			   machineSymbol, ((MachineState *)currentStates->last->value)->symbol);
+		printf("printf(\"%%s is %%s by the machine %s\\n\", parse, current_state == PS_%s_%s ? \"accepted\" : \"rejected\");\n\n",
+			   machineSymbol, machineSymbol, ((MachineState *)currentStates->last->value)->symbol);
 		printIndentation();
 		printf("return 0;\n");
 
@@ -259,7 +259,7 @@ static void translateDeclaration(Declaration *declaration) {
 			printf("char *");
 			break;
 		case MACHINE_TYPE:
-			printf("run_machine_m()");
+			printf("run_machine_%s()", declaration->symbol);
 			return;
 		case PREDICATE_TYPE:
 			// TODO: hacer
