@@ -16,6 +16,7 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 static void translateMachineStructs(Node *firstState, char *machineSymbol);
 static void translateMachineParser(char *machineSymbol);
 static void translateMachineExecutionFunction(LinkedList *machineStates, char *machineSymbol);
+static void translateBlock(LinkedList *statements);
 
 static size_t indentationLevel = 0;
 
@@ -43,7 +44,6 @@ void translate(LinkedList *ast, LinkedList *machines) {
 		current = current->next;
 	}
 	printIndentation();
-	printf("return 0;\n");
 	indentationLevel--;
 	printf("}\n");
 }
@@ -86,12 +86,37 @@ static void translateStatement(Statement *statement) {
 			translateExpression(statement->data.expression);
 			break;
 		case BREAK_STMT:
+			break;
 		case RETURN_STMT:
+			printIndentation();
+			printf("return ");
+			translateExpression(statement->data.expression);
+			putchar(';');
+			indentationLevel--;
+			printIndentation();
+			break;
 		case BLOCK_STMT:
+			translateBlock(statement->data.statements);
+			break;
 		default:
 			break;
 	}
 	putchar('\n');
+}
+
+static void translateBlock(LinkedList *statements) {
+	Node *statement = statements->first;
+	printIndentation();
+	printf("{\n");
+	indentationLevel++;
+	while(statement != NULL){
+		translateStatement(statement->value);
+		statement = statement->next;
+	}
+	indentationLevel--;
+	printIndentation();
+	printf("}\n");
+
 }
 
 static void translateDeclaration(Declaration *declaration) {

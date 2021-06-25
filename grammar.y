@@ -40,7 +40,7 @@
 %type <valuetype> type
 %type <expression> term expression array machine
 %type <statement> definition declaration operation statement assignment
-%type <linkedlist> S char_array_elem char_array transition_array_elem transition_array ident_array_elem ident_array
+%type <linkedlist> S statement_list char_array_elem char_array transition_array_elem transition_array ident_array_elem ident_array
 %type <transitiontype> transition
 
 %token <string> IDENT STRING
@@ -50,9 +50,10 @@
 %token RETURN */
 %token <character> CHAR
 %token <boolean> BOOL
-%token CHAR_DEF BOOL_DEF CHAR_ARRAY_DEF MACHINE_DEF TRANSITIONS_DEF INITIAL_STATE_DEF FINAL_STATES_DEF
+%token CHAR_DEF BOOL_DEF CHAR_ARRAY_DEF MACHINE_DEF TRANSITIONS_DEF INITIAL_STATE_DEF FINAL_STATES_DEF PREDICATE_DEF
 %token AND OR EQ NE NOT
 %token PRINT
+%token RETURN
 %token ARROW
 %token WHEN PARSE WITH
 
@@ -67,18 +68,23 @@
 
 %%
 
-S           :   S statement                             {;}
+S           :   S statement                             {if($1 != NULL) addToList($$, $2);}
             |   /*empty*/                               {args[TREE_LIST] = newList(); args[MACHINE_LIST] = newList();}
 
-statement   :   operation ';'                           {if($1 != NULL) addToList(args[TREE_LIST], $1);}
+statement   :   operation ';'                           {$$ = $1;}
             |   ';'                                     {;}
-            |   assignment ';'                          {addToList(args[TREE_LIST], $1);}
-            |   expression ';'                          {addToList(args[TREE_LIST], newExpressionStatement($1));}
+            |   assignment ';'                          {$$ = $1;}
+            |   expression ';'                          {$$ = newStatement(EXPRESSION_STMT, $1);}
+            |   '{' statement_list '}'                  {$$ = newBlock($2);}
             ;
+
+statement_list  :   statement                           {$$ = newList();addToList($$, $1);}
+            |   statement statement                     {addToList($$, $2);;}
 
 operation   :   PRINT CHAR            	                {printf("// [DEBUG]: %c\n", (unsigned char)$2);}
             |   declaration                             {$$ = $1;}
             |   definition                              {$$ = $1;}
+            |   RETURN expression                       {$$ = newStatement(RETURN_STMT, $2);}
             /* |   return                  {;} */
             ;
 

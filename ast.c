@@ -127,17 +127,15 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 
 Statement *newLoop(); // TODO: Hacer xd
 
-Statement *newBlock(LinkedList *list) {
+Statement *newStatement(StatementType type, Expression *expression) {
 	Statement *statement = malloc(sizeof(Statement));
-	statement->data.statements = list;
-	statement->type = BLOCK_STMT;
+	statement->type = type;
+	statement->data.expression = expression;
 	return statement;
 }
-
-Statement *newExpressionStatement(Expression *expression) {
+Statement *newBlock(LinkedList *statementList) {
 	Statement *statement = malloc(sizeof(Statement));
-	statement->data.expression = malloc(sizeof(Expression));
-	statement->type = EXPRESSION_STMT;
-	statement->data.expression = expression;
+	statement->type = BLOCK_STMT;
+	statement->data.statements = statementList;
 	return statement;
 }

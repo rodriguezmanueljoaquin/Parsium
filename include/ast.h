@@ -95,7 +95,7 @@ Statement *newConditional(Expression *condition, Statement *affirmative, Stateme
 Statement *newAssignment(char *symbol, Expression *value);
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value);
 Statement *newLoop(); // TODO: Hacer xd
-Statement *newBlock(LinkedList *list);
-Statement *newExpressionStatement(Expression* expression);
+Statement *newStatement(StatementType type, Expression* expression);
+Statement *newBlock(LinkedList *statementList);
 
 #endif

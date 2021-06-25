@@ -20,9 +20,8 @@ Char\[\]							return CHAR_ARRAY_DEF;
 Bool                            	return BOOL_DEF;
 def                             	return DEFINE;
 Machine							    return MACHINE_DEF;
-%{
-// return                          return RETURN;
-%}
+Predicate                           return PREDICATE_DEF;
+
 transitions                         return TRANSITIONS_DEF;
 initialState                        return INITIAL_STATE_DEF;
 finalStates                         return FINAL_STATES_DEF;
@@ -32,6 +31,7 @@ false                           	{ yylval.boolean = false; return BOOL;}
 when                                return WHEN;
 parse                               return PARSE;
 with                                return WITH;
+return                              return RETURN;
 
 ->                                  return ARROW;
 
