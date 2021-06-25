@@ -68,24 +68,25 @@
 
 %%
 
-S           :   S statement                             {if($1 != NULL) addToList($$, $2);}
-            |   /*empty*/                               {args[TREE_LIST] = newList(); args[MACHINE_LIST] = newList();}
+S 			:	S statement								{if($2 != NULL) addToList($1, $2);}
+			|	/* empty */								{args[TREE_LIST] = newList(); args[MACHINE_LIST] = newList(); $$ = args[TREE_LIST];}
+			;
+
+statement_list	: statement_list statement 				{if($2 != NULL) addToList($1, $2);}
+			|	/*empty*/								{$$ = newList();}
+			;
 
 statement   :   operation ';'                           {$$ = $1;}
             |   ';'                                     {;}
             |   assignment ';'                          {$$ = $1;}
             |   expression ';'                          {$$ = newStatement(EXPRESSION_STMT, $1);}
-            |   '{' statement_list '}'                  {$$ = newBlock($2);}
+			|	'{' statement_list '}'					{$$ = newBlock($2);}
             ;
-
-statement_list  :   statement                           {$$ = newList();addToList($$, $1);}
-            |   statement statement                     {addToList($$, $2);;}
 
 operation   :   PRINT CHAR            	                {printf("// [DEBUG]: %c\n", (unsigned char)$2);}
             |   declaration                             {$$ = $1;}
             |   definition                              {$$ = $1;}
             |   RETURN expression                       {$$ = newStatement(RETURN_STMT, $2);}
-            /* |   return                  {;} */
             ;
 
 declaration :   DEFINE type IDENT                       {$$ = newDeclaration($2, $3, NULL);}

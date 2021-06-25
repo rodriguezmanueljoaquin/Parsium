@@ -35,16 +35,16 @@ void translate(LinkedList *ast, LinkedList *machines) {
 	printf("%s", header);
 	translateMachineDefinitions(machines);
 
-	Node *current = ast->first;
-
+	Node *currentList = ast->first;
 	printf("int main() {\n");
 	indentationLevel++;
-	while (current != NULL) {
-		translateStatement((Statement *)current->value);
-		current = current->next;
+	while (currentList != NULL) {
+		translateStatement((Statement *)currentList->value);
+
+		currentList = currentList->next;
 	}
-	printIndentation();
 	indentationLevel--;
+	printIndentation();
 	printf("}\n");
 }
 
@@ -109,14 +109,13 @@ static void translateBlock(LinkedList *statements) {
 	printIndentation();
 	printf("{\n");
 	indentationLevel++;
-	while(statement != NULL){
+	while (statement != NULL) {
 		translateStatement(statement->value);
 		statement = statement->next;
 	}
 	indentationLevel--;
 	printIndentation();
 	printf("}\n");
-
 }
 
 static void translateDeclaration(Declaration *declaration) {
@@ -221,7 +220,7 @@ static void translateExpression(Expression *expression) {
 			break;
 		case PARSE_OP:
 			printIndentation();
-			printf("run_machine_%s(\"%s\");", (char *) expression->exp1->value, (char *) expression->exp2->value);	
+			printf("run_machine_%s(\"%s\");", (char *)expression->exp1->value, (char *)expression->exp2->value);
 			break;
 		case EXEC_OP:
 			// TODO
@@ -318,7 +317,7 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 	printf("N(ST_%s_ERROR)};\n\n", machineSymbol);
 
 	printIndentation();
-	printf("static const parser_state_m final_states_m[] = {");
+	printf("static const parser_state_%s final_states_%s[] = {", machineSymbol, machineSymbol);
 
 	auxNode = finalStatesSymbols->first;
 	size_t finalStatesQuantity;
