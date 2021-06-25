@@ -18,14 +18,20 @@ Char                            	return CHAR_DEF;
 Char\[\]							return CHAR_ARRAY_DEF;
 Bool                            	return BOOL_DEF;
 def                             	return DEFINE;
+Machine							    return MACHINE_DEF;
 %{
-// Machine							return MACHINE_DEF;
 // with                            return WITH;
 // return                          return RETURN;
 %}
+transitions                         return TRANSITIONS_DEF;
+initialState                        return INITIAL_STATE_DEF;
+finalStates                         return FINAL_STATES_DEF;
 print                           	return PRINT;
 true                            	{ yylval.boolean = true; return BOOL;}
 false                           	{ yylval.boolean = false; return BOOL;}
+when                                return WHEN;
+
+->                                  return ARROW;
 
 =                               	return ASSIGN;
 

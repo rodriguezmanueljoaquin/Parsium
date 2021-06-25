@@ -3,6 +3,6 @@
 
 #include <linkedlist.h>
 
-void translate(LinkedList *list);
+void translate(LinkedList *ast, LinkedList *machines);
 
 #endif

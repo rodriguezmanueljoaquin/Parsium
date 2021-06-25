@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <translate.h>
 
+static void translateMachineDefinitions(LinkedList *machines);
 static void translateStatement(Statement *statement);
 static void translateDeclaration(Declaration *declaration);
 static void translateConditional(Conditional *conditional);
@@ -12,23 +13,54 @@ static void translateConstant(ValueType type, void *value);
 
 static size_t identation_level = 0;
 
+static char *header = "#include <stdio.h>\n"
+					  "#define N(x) (sizeof(x) / sizeof((x)[0]))\n"
+					  "#define ANY -1\n\n";
+
 static void printIdentation() {
 	for (size_t i = 0; i < identation_level; i++) {
 		putchar('\t');
 	}
 }
 
-void translate(LinkedList *list) {
-	Node *current = list->first;
+void translate(LinkedList *ast, LinkedList *machines) {
+	printf("%s", header);
+
+	translateMachineDefinitions(machines);
+	Node *current = ast->first;
+
 	printf("int main() {\n");
 	identation_level++;
 	while (current != NULL) {
-		fflush(stdout);
 		translateStatement((Statement *)current->value);
 		current = current->next;
 	}
+	printIdentation();
+	printf("return 0;\n");
 	identation_level--;
 	printf("}\n");
+}
+
+static void translateMachineDefinitions(LinkedList *machines) {
+	Node *current = machines->first;
+	while (current != NULL) {
+		printf("typedef enum {\n");
+		char *symbol = ((Declaration *)current->value)->symbol;
+		LinkedList *transitions = ((MachineType *)((Declaration *)current->value)->value)->transitions;
+
+		identation_level++;
+
+		Node *current_transition = transitions-> first;
+		for (int i = 0; current_transition != NULL; current_transition = current_transition->next, i++) {
+			printIdentation();
+			printf("PS_%s_%d,\n",symbol, i);
+		}
+		identation_level--;
+
+
+		printf("} parser_state_%s;\n\n", ((Declaration *)current->value)->symbol);
+		current = current->next;
+	}
 }
 
 static void translateStatement(Statement *statement) {
@@ -186,7 +218,7 @@ static void translateConstant(ValueType type, void *value) {
 			while (current != NULL) {
 				printf("'%c'", *((char *)((Expression *)current->value)->value));
 				current = current->next;
-				
+
 				if (current != NULL)
 					printf(", ");
 			}

@@ -1,5 +1,6 @@
 #include <ast.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 Expression *newSymbol(char *identifier) {
 	Expression *expression = malloc(sizeof(Expression));
@@ -37,6 +38,32 @@ Expression *newArray(LinkedList *list, ValueType type) {
 	expression->type = type;
 	expression->op = CONST_OP;
 	expression->value = list;
+
+	return expression;
+}
+
+TransitionType *newTransition(char *fromState, char *toState, Expression *when) {
+	TransitionType *transition = malloc(sizeof(TransitionType));
+	transition->fromState = fromState;
+	transition->toState = toState;
+	transition->when = when;
+
+	return transition;
+}
+
+Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates) {
+	printf("MAQUINA CREADA\n");
+	Expression *expression = malloc(sizeof(Expression));
+	expression->type = MACHINE_TYPE;
+	expression->op = CONST_OP;
+	expression->value = malloc(sizeof(MachineType));
+	*(MachineType *)(expression->value) = (MachineType){
+		.transitions = transitions,
+		.initialState = initialState,
+		.finalStates = finalStates,
+	};
+	expression->exp1 == NULL;
+	expression->exp2 == NULL;
 
 	return expression;
 }

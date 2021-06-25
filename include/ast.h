@@ -32,6 +32,18 @@ typedef struct Expression {
 	struct Expression *exp1, *exp2;
 } Expression;
 
+typedef struct TransitionType {
+	char *fromState;
+	char *toState;
+	Expression *when;
+} TransitionType;
+
+typedef struct MachineType {
+	LinkedList *transitions;
+	char *initialState;
+	LinkedList *finalStates;
+} MachineType;
+
 typedef struct Conditional {
 	Expression *condition;
 	Statement *affirmative;
@@ -70,6 +82,8 @@ Expression *newChar(char c);
 Expression *newBool(bool b);
 Expression *newArray(LinkedList *list, ValueType type);
 Expression *newOperation(OperationType op, Expression *exp1, Expression *exp2);
+Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates);
+TransitionType *newTransition(char *fromState, char *toState, Expression *when);
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative);
 Statement *newAssignment(char *symbol, Expression *value);
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value);
