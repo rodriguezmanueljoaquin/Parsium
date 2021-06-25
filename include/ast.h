@@ -5,9 +5,9 @@
 #include <linkedlist.h>
 #include <stdbool.h>
 
-typedef enum { AND_OP, OR_OP, NOT_OP, EQ_OP, NE_OP, PARENTHESES_OP, EXEC_OP, SYMBOL_OP, CONST_OP } OperationType;
+typedef enum { AND_OP, OR_OP, NOT_OP, EQ_OP, NE_OP, PARENTHESES_OP, EXEC_OP, SYMBOL_OP, CONST_OP, PARSE_OP } OperationType;
 
-typedef enum { CONDITIONAL_STMT, LOOP_STMT, ASSIGN_STMT, DECLARE_STMT, BREAK_STMT, RETURN_STMT, BLOCK_STMT, PARSE_STMT } StatementType;
+typedef enum { CONDITIONAL_STMT, LOOP_STMT, ASSIGN_STMT, DECLARE_STMT, BREAK_STMT, RETURN_STMT, BLOCK_STMT, EXPRESSION_STMT } StatementType;
 
 typedef enum {
 	CHAR_TYPE,
@@ -79,7 +79,7 @@ struct Statement {
 		Assignment *assignment;
 		// Loop *loop;
 		Declaration *declaration;
-		ParseData *parse;
+		Expression *expression;
 		LinkedList *statements;
 	} data;
 };
@@ -96,6 +96,6 @@ Statement *newAssignment(char *symbol, Expression *value);
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value);
 Statement *newLoop(); // TODO: Hacer xd
 Statement *newBlock(LinkedList *list);
-Statement *newParseStatement(char *string, char *machineSymbol);
+Statement *newExpressionStatement(Expression* expression);
 
 #endif

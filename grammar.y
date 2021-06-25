@@ -73,12 +73,12 @@ S           :   S statement                             {;}
 statement   :   operation ';'                           {if($1 != NULL) addToList(args[TREE_LIST], $1);}
             |   ';'                                     {;}
             |   assignment ';'                          {addToList(args[TREE_LIST], $1);}
+            |   expression ';'                          {addToList(args[TREE_LIST], newExpressionStatement($1));}
             ;
 
 operation   :   PRINT CHAR            	                {printf("// [DEBUG]: %c\n", (unsigned char)$2);}
             |   declaration                             {$$ = $1;}
             |   definition                              {$$ = $1;}
-            |   PARSE STRING WITH IDENT                 {$$ = newParseStatement($2, $4);}
             /* |   return                  {;} */
             ;
 
@@ -106,6 +106,7 @@ expression  :   expression OR expression                {$$ = newExpression(OR_O
 			|	array						            {$$ = $1;}
             |   machine                                 {$$ = $1;}
             |   term                                    {$$ = $1;}
+            |   PARSE STRING WITH IDENT                 {$$ = newExpression(PARSE_OP, newSymbol($4), newSymbol($2));}
             ;
 
 term        :   BOOL                                    {$$ = newBool($1);}

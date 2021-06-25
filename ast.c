@@ -76,6 +76,9 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 		case NE_OP:
 			expType = BOOL_TYPE;
 			break;
+		case PARSE_OP:
+			expType = PARSE_TYPE;
+			break;
 		case EXEC_OP:
 		case SYMBOL_OP:
 			return NULL;
@@ -131,11 +134,10 @@ Statement *newBlock(LinkedList *list) {
 	return statement;
 }
 
-Statement *newParseStatement(char *string, char *machineSymbol) {
+Statement *newExpressionStatement(Expression *expression) {
 	Statement *statement = malloc(sizeof(Statement));
-	statement->data.parse = malloc(sizeof(ParseData));
-	statement->type = PARSE_STMT;
-	statement->data.parse->machineSymbol = machineSymbol; 
-	statement->data.parse->string = string; 
+	statement->data.expression = malloc(sizeof(Expression));
+	statement->type = EXPRESSION_STMT;
+	statement->data.expression = expression;
 	return statement;
 }

@@ -82,9 +82,8 @@ static void translateStatement(Statement *statement) {
 			translateDeclaration(statement->data.declaration);
 			putchar(';');
 			break;
-		case PARSE_STMT:
-			printIndentation();
-			printf("run_machine_%s(\"%s\");", statement->data.parse->machineSymbol, statement->data.parse->string);
+		case EXPRESSION_STMT:
+			translateExpression(statement->data.expression);
 			break;
 		case BREAK_STMT:
 		case RETURN_STMT:
@@ -194,6 +193,10 @@ static void translateExpression(Expression *expression) {
 			printf("(");
 			translateExpression(expression->exp1);
 			printf(")");
+			break;
+		case PARSE_OP:
+			printIndentation();
+			printf("run_machine_%s(\"%s\");", (char *) expression->exp1->value, (char *) expression->exp2->value);	
 			break;
 		case EXEC_OP:
 			// TODO
