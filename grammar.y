@@ -39,7 +39,7 @@
 
 %type <valuetype> type
 %type <expression> term expression array machine
-%type <statement> definition declaration operation statement assignment
+%type <statement> definition declaration operation statement assignment block
 %type <linkedlist> S statement_list char_array_elem char_array transition_array_elem transition_array ident_array_elem ident_array
 %type <transitiontype> transition
 
@@ -56,6 +56,7 @@
 %token RETURN
 %token ARROW
 %token WHEN PARSE WITH
+%token IF ELSE
 
 %right ASSIGN
 %left  OR
@@ -80,7 +81,11 @@ statement   :   operation ';'                           {$$ = $1;}
             |   ';'                                     {;}
             |   assignment ';'                          {$$ = $1;}
             |   expression ';'                          {$$ = newStatement(EXPRESSION_STMT, $1);}
-			|	'{' statement_list '}'					{$$ = newBlock($2);}
+			|	IF '(' expression ')' block ELSE block  {$$ = newConditional($3, $5, $7);}
+			|	IF '(' expression ')' block             {$$ = newConditional($3, $5, NULL);}
+            ;
+
+block       :   '{' statement_list '}'					{$$ = newBlock($2);}
             ;
 
 operation   :   PRINT CHAR            	                {printf("// [DEBUG]: %c\n", (unsigned char)$2);}

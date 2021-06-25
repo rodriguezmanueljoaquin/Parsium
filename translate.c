@@ -115,7 +115,7 @@ static void translateBlock(LinkedList *statements) {
 	}
 	indentationLevel--;
 	printIndentation();
-	printf("}\n");
+	printf("}");
 }
 
 static void translateDeclaration(Declaration *declaration) {
@@ -162,23 +162,16 @@ static void translateDeclaration(Declaration *declaration) {
 static void translateConditional(Conditional *conditional) {
 	printIndentation();
 	printf("if (");
-	indentationLevel++;
 	translateExpression(conditional->condition);
-	indentationLevel--;
-	printf(") {\n");
-	indentationLevel++;
+	printf(")");
 	translateStatement(conditional->affirmative);
-	indentationLevel--;
 
 	if (conditional->negative != NULL) {
-		printf("} else {\n");
-		indentationLevel++;
+		printIndentation();
+		printf("else");
 		translateStatement(conditional->negative);
-		indentationLevel--;
 	}
 
-	printIndentation();
-	printf("}");
 }
 
 static void translateAssignment(Assignment *assignment) {

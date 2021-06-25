@@ -32,6 +32,8 @@ when                                return WHEN;
 parse                               return PARSE;
 with                                return WITH;
 return                              return RETURN;
+if                                  return IF;
+else                                return ELSE;
 
 ->                                  return ARROW;
 
