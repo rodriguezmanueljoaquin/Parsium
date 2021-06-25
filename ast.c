@@ -52,18 +52,15 @@ TransitionType *newTransition(char *fromState, char *toState, Expression *when) 
 }
 
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates) {
-	printf("MAQUINA CREADA\n");
 	Expression *expression = malloc(sizeof(Expression));
 	expression->type = MACHINE_TYPE;
 	expression->op = CONST_OP;
 	expression->value = malloc(sizeof(MachineType));
-	*(MachineType *)(expression->value) = (MachineType){
-		.transitions = transitions,
-		.initialState = initialState,
-		.finalStates = finalStates,
-	};
-	expression->exp1 == NULL;
-	expression->exp2 == NULL;
+	((MachineType *)expression->value)->transitions = transitions;
+	((MachineType *)expression->value)->initialState = initialState;
+	((MachineType *)expression->value)->finalStates = finalStates;
+	expression->exp1 = NULL;
+	expression->exp2 = NULL;
 
 	return expression;
 }

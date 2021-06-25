@@ -1,6 +1,7 @@
 #ifndef LINKED_LIST_H
-
 #define LINKED_LIST_H
+
+#include <stdbool.h>
 
 typedef struct Node {
 	void *value;
@@ -14,5 +15,7 @@ typedef struct LinkedList {
 LinkedList *newList();
 
 void addToList(LinkedList *list, void *data);
+
+bool machineStatesContains(LinkedList *list, char *symbol);
 
 #endif

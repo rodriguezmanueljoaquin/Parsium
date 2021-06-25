@@ -1,6 +1,7 @@
 #include <ast.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <translate.h>
 
 static void translateMachineDefinitions(LinkedList *machines);
@@ -11,55 +12,210 @@ static void translateAssignment(Assignment *assignment);
 static void translateExpression(Expression *expression);
 static void translateConstant(ValueType type, void *value);
 
-static size_t identation_level = 0;
+static size_t indentationLevel = 0;
 
 static char *header = "#include <stdio.h>\n"
 					  "#define N(x) (sizeof(x) / sizeof((x)[0]))\n"
 					  "#define ANY -1\n\n";
 
-static void printIdentation() {
-	for (size_t i = 0; i < identation_level; i++) {
+static void printIndentation() {
+	for (size_t i = 0; i < indentationLevel; i++) {
 		putchar('\t');
 	}
 }
 
 void translate(LinkedList *ast, LinkedList *machines) {
 	printf("%s", header);
-
 	translateMachineDefinitions(machines);
+
 	Node *current = ast->first;
 
 	printf("int main() {\n");
-	identation_level++;
+	indentationLevel++;
 	while (current != NULL) {
 		translateStatement((Statement *)current->value);
 		current = current->next;
 	}
-	printIdentation();
+	printIndentation();
 	printf("return 0;\n");
-	identation_level--;
+	indentationLevel--;
 	printf("}\n");
 }
 
-static void translateMachineDefinitions(LinkedList *machines) {
-	Node *current = machines->first;
-	while (current != NULL) {
-		printf("typedef enum {\n");
-		char *symbol = ((Declaration *)current->value)->symbol;
-		LinkedList *transitions = ((MachineType *)((Declaration *)current->value)->value)->transitions;
+static MachineState *newMachineState(char *symbol) {
+	MachineState *newState = malloc(sizeof(MachineState));
+	newState->symbol = symbol;
+	newState->transitions = newList();
+	newState->transitionSize = 1; // Todos los estados tienen como ultima transicion una hacia error
 
-		identation_level++;
+	return newState;
+}
 
-		Node *current_transition = transitions-> first;
-		for (int i = 0; current_transition != NULL; current_transition = current_transition->next, i++) {
-			printIdentation();
-			printf("PS_%s_%d,\n",symbol, i);
+static void addTransitionToMachineState(LinkedList *machineStates, char *fromState, TransitionType *transition) {
+	Node *aux = machineStates->first;
+	while (aux != NULL) {
+		if (strcmp(((MachineState *)aux->value)->symbol, fromState) == 0) {
+			addToList(((MachineState *)aux->value)->transitions, transition);
+			((MachineState *)aux->value)->transitionSize++;
 		}
-		identation_level--;
 
+		aux = aux->next;
+	}
+}
 
-		printf("} parser_state_%s;\n\n", ((Declaration *)current->value)->symbol);
-		current = current->next;
+static void translateMachineDefinitions(LinkedList *machines) {
+	Node *currentNode = machines->first;
+	MachineType *currentMachine;
+	char *machineSymbol;
+	LinkedList *currentStates;
+	while (currentNode != NULL) {
+		currentMachine = ((MachineType *)((Statement *)currentNode->value)->data.declaration->value->value);
+		machineSymbol = ((Statement *)currentNode->value)->data.declaration->symbol;
+		currentStates = newList();
+		printIndentation();
+		printf("typedef enum {\n");
+
+		Node *auxNode = currentMachine->transitions->first;
+		for (size_t i = 0; auxNode != NULL; auxNode = auxNode->next, i++) {
+			TransitionType *currentTransition = (TransitionType *)auxNode->value;
+			if (!machineStatesContains(currentStates, currentTransition->fromState)) {
+				addToList(currentStates, newMachineState(currentTransition->fromState));
+				addTransitionToMachineState(currentStates, currentTransition->fromState, currentTransition);
+			} else {
+				addTransitionToMachineState(currentStates, currentTransition->fromState, currentTransition);
+			}
+			if (!machineStatesContains(currentStates, currentTransition->toState))
+				addToList(currentStates, newMachineState(currentTransition->toState));
+		}
+
+		indentationLevel++;
+		auxNode = currentStates->first;
+		for (size_t i = 0; auxNode != NULL; auxNode = auxNode->next, i++) {
+			printIndentation();
+			printf("PS_%s_%s,\n", machineSymbol, ((MachineState *)auxNode->value)->symbol);
+		}
+		printIndentation();
+		printf("PS_%s_ERROR,\n", machineSymbol);
+		indentationLevel--;
+
+		printIndentation();
+		printf("} parser_state_%s;\n\n"
+			   "typedef struct {\n",
+			   machineSymbol);
+
+		indentationLevel++;
+		printIndentation();
+		printf("char when;\n");
+		printIndentation();
+		printf("parser_state_%s destination;\n", machineSymbol);
+		indentationLevel--;
+
+		printIndentation();
+		printf("} parser_state_transition_%s;\n\n", machineSymbol);
+
+		auxNode = currentStates->first;
+		MachineState *auxState;
+		for (size_t i = 0; auxNode != NULL; auxNode = auxNode->next, i++) {
+			auxState = (MachineState *)auxNode->value;
+			printIndentation();
+			printf("static const parser_state_transition_%s ST_%s_%s[%ld] = {\n", machineSymbol, machineSymbol, auxState->symbol,
+				   auxState->transitionSize);
+			indentationLevel++;
+			Node *auxTransitionNode = auxState->transitions->first;
+			for (size_t j = 0; auxTransitionNode != NULL; auxTransitionNode = auxTransitionNode->next, j++) {
+				printIndentation();
+				printf("{.when = '%c', .destination = PS_%s_%s},\n",
+					   *(char *)((TransitionType *)auxTransitionNode->value)->when->value, machineSymbol,
+					   ((TransitionType *)auxTransitionNode->value)->toState);
+			}
+			printIndentation();
+			printf("{.when = ANY, .destination = PS_%s_ERROR},\n", machineSymbol);
+
+			indentationLevel--;
+
+			printIndentation();
+			printf("};\n\n");
+		}
+		printIndentation();
+		printf("static const parser_state_transition_%s ST_%s_ERROR[1] = {\n", machineSymbol, machineSymbol);
+		printIndentation();
+		printf("\t{.when = ANY, .destination = PS_%s_ERROR},\n", machineSymbol);
+		printIndentation();
+		printf("};\n\n");
+
+		// ESTRUCTURAS DE LA MAQUINA
+		printIndentation();
+		printf("static const parser_state_transition_%s *states_%s[] = {", machineSymbol, machineSymbol);
+		auxNode = currentStates->first;
+		for (size_t i = 0; auxNode != NULL; auxNode = auxNode->next, i++) {
+			printIndentation();
+			printf("ST_%s_%s, ", machineSymbol, ((MachineState *)auxNode->value)->symbol);
+		}
+		printf("ST_%s_ERROR};\n\n", machineSymbol);
+
+		printIndentation();
+		printf("static const size_t states_transitions_size_%s[] = {", machineSymbol);
+		auxNode = currentStates->first;
+		for (size_t i = 0; auxNode != NULL; auxNode = auxNode->next, i++) {
+			printIndentation();
+			printf("N(ST_%s_%s), ", machineSymbol, ((MachineState *)auxNode->value)->symbol);
+		}
+		printf("N(ST_%s_ERROR)};\n\n", machineSymbol);
+
+		// FUNCION QUE CORRE LA MAQUINA
+		printIndentation();
+		printf("int run_machine_%s() {\n", machineSymbol);
+
+		indentationLevel++;
+		printIndentation();
+		printf("char *parse = \"%s\";\n", "ab");
+		printIndentation();
+		// FIXME: QUE PASA SI NO HAY NODOS?
+		printf("parser_state_%s current_state = PS_%s_%s;\n", machineSymbol, machineSymbol,
+			   ((MachineState *)currentStates->first->value)->symbol);
+		printIndentation();
+		printf("char current_char;\n\n");
+
+		printIndentation();
+		printf("for (size_t i = 0; parse[i] != '\\0' && current_state != PS_%s_ERROR; i++) {\n", machineSymbol);
+
+		indentationLevel++;
+		printIndentation();
+		printf("current_char = parse[i];\n");
+		printIndentation();
+		printf("for (size_t j = 0; j < states_transitions_size_%s[current_state]; j++) {\n", machineSymbol);
+
+		indentationLevel++;
+		printIndentation();
+		printf("if (current_char == states_%s[current_state][j].when || states_%s[current_state][j].when == (char)ANY) {\n",
+			   machineSymbol, machineSymbol);
+		printIndentation();
+		printf("current_state = states_%s[current_state][j].destination;\n", machineSymbol);
+		printIndentation();
+		printf("break;\n");
+		printIndentation();
+		printf("}\n");
+		indentationLevel--;
+
+		printIndentation();
+		printf("}\n");
+		indentationLevel--;
+
+		printIndentation();
+		printf("}\n\n");
+
+		printIndentation();
+		// FIXME: ESTADOS FINALES
+		printf("printf(\"%%s is %%s by the machine\\n\", parse, current_state == PS_%s_%s ? \"accepted\" : \"rejected\");\n\n",
+			   machineSymbol, ((MachineState *)currentStates->last->value)->symbol);
+		printIndentation();
+		printf("return 0;\n");
+
+		indentationLevel--;
+		printIndentation();
+		printf("}\n\n");
+
+		currentNode = currentNode->next;
 	}
 }
 
@@ -90,7 +246,7 @@ static void translateStatement(Statement *statement) {
 }
 
 static void translateDeclaration(Declaration *declaration) {
-	printIdentation();
+	printIndentation();
 	switch (declaration->type) {
 		case CHAR_TYPE:
 		case CHAR_ARRAY_TYPE:
@@ -103,8 +259,8 @@ static void translateDeclaration(Declaration *declaration) {
 			printf("char *");
 			break;
 		case MACHINE_TYPE:
-			// TODO: hacer
-			break;
+			printf("run_machine_m()");
+			return;
 		case PREDICATE_TYPE:
 			// TODO: hacer
 			break;
@@ -132,29 +288,29 @@ static void translateDeclaration(Declaration *declaration) {
 }
 
 static void translateConditional(Conditional *conditional) {
-	printIdentation();
+	printIndentation();
 	printf("if (");
-	identation_level++;
+	indentationLevel++;
 	translateExpression(conditional->condition);
-	identation_level--;
+	indentationLevel--;
 	printf(") {\n");
-	identation_level++;
+	indentationLevel++;
 	translateStatement(conditional->affirmative);
-	identation_level--;
+	indentationLevel--;
 
 	if (conditional->negative != NULL) {
 		printf("} else {\n");
-		identation_level++;
+		indentationLevel++;
 		translateStatement(conditional->negative);
-		identation_level--;
+		indentationLevel--;
 	}
 
-	printIdentation();
+	printIndentation();
 	printf("}");
 }
 
 static void translateAssignment(Assignment *assignment) {
-	printIdentation();
+	printIndentation();
 	printf("%s = ", assignment->symbol);
 	translateExpression(assignment->expression);
 }

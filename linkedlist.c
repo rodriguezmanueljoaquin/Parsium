@@ -1,5 +1,7 @@
 #include <linkedlist.h>
 #include <stdlib.h>
+#include <string.h>
+#include <translate.h>
 
 LinkedList *newList() {
 	LinkedList *new = malloc(sizeof(LinkedList));
@@ -22,4 +24,15 @@ void addToList(LinkedList *list, void *data) {
 		list->last->next = new;
 
 	list->last = new;
+}
+
+bool machineStatesContains(LinkedList *list, char *symbol) {
+	Node *aux = list->first;
+	while (aux != NULL) {
+		if (strcmp(((MachineState *)aux->value)->symbol, symbol) == 0)
+			return true;
+
+		aux = aux->next;
+	}
+	return false;
 }

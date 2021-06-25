@@ -63,8 +63,6 @@
 %nonassoc EQ NE
 %nonassoc CHAR_DEF BOOL_DEF
 
-// %type   <Machine> machine
-// %type   <Predicate> new_predicate
 %start S
 
 %%
@@ -111,7 +109,7 @@ term        :   BOOL                                    {$$ = newBool($1);}
 type        :   BOOL_DEF                                {$$ = BOOL_TYPE;}
             |   CHAR_DEF                                {$$ = CHAR_TYPE;}
             |   CHAR_ARRAY_DEF                          {$$ = CHAR_ARRAY_TYPE;}
-            |   MACHINE_DEF                             {$$ = MACHINE_TYPE; printf("found machine definition\n");}
+            |   MACHINE_DEF                             {$$ = MACHINE_TYPE;}
 			;
 
 array		:	char_array					            {$$ = newArray($1, CHAR_ARRAY_TYPE);}
@@ -123,10 +121,10 @@ char_array_elem :   term               				    {$$ = newList(); addToList($$, $1
             |   char_array_elem ',' term    		    {addToList($$,$3);}
             ;
 
-machine     :   '<' TRANSITIONS_DEF ASSIGN transition_array ',' INITIAL_STATE_DEF ASSIGN IDENT ',' FINAL_STATES_DEF ASSIGN ident_array '>' {$$ = newMachine($4, $8, $12); printf("found machine constructor\n");}
+machine     :   '<' TRANSITIONS_DEF ASSIGN transition_array ',' INITIAL_STATE_DEF ASSIGN IDENT ',' FINAL_STATES_DEF ASSIGN ident_array '>' {$$ = newMachine($4, $8, $12);}
             ;
 
-transition_array    :   '[' transition_array_elem ']'   {$$ = $2; printf("found transition array\n");}
+transition_array    :   '[' transition_array_elem ']'   {$$ = $2;}
             ;
 
 transition_array_elem   :   transition                  {$$ = newList(); addToList($$, $1);}
@@ -136,16 +134,13 @@ transition_array_elem   :   transition                  {$$ = newList(); addToLi
 transition  :   IDENT ARROW IDENT WHEN expression      {$$ = newTransition($1, $3, $5);}
             ;
 
-ident_array :   '[' ident_array_elem ']'                {$$ = $2; printf("found final states\n");}
+ident_array :   '[' ident_array_elem ']'                {$$ = $2;}
             ;
 
 ident_array_elem   :   IDENT                            {$$ = newList(); addToList($$, $1);}
             |   ident_array_elem ',' IDENT              {addToList($$,$3);}
             ;
 /* return      :   'return' boolean_exp    {;} */
-
-/* machine     :   '<' machine_param '>'         {$$ = $1;}
-            ; */
 
 /* new_predicate   : '(' parameter ')' '{' statement return ';' '}'       {
     bool predicate(char $2) {
