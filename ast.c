@@ -96,10 +96,8 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 		case NOT_OP:
 		case EQ_OP:
 		case NE_OP:
-			expType = BOOL_TYPE;
-			break;
 		case PARSE_OP:
-			expType = PARSE_TYPE;
+			expType = BOOL_TYPE;
 			break;
 		case EXEC_OP:
 		case SYMBOL_OP:
@@ -126,7 +124,7 @@ Expression *newParseExpression(char *machineSymbol, char *string){
 		parseError("Variable type conflict in parse");
 
 	Expression *expression = malloc(sizeof(Expression));
-	expression->type = PARSE_TYPE;
+	expression->type = BOOL_TYPE;
 	expression->op = PARSE_OP;
 	expression->exp1 = newSymbol(machineSymbol);
 	expression->exp2 = newString(string);

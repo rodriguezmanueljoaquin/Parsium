@@ -41,7 +41,7 @@
 %parse-param { LinkedList **args }
 
 %type <valuetype> type
-%type <expression> term expression array machine
+%type <expression> term expression boolean_expression array machine 
 %type <statement> definition declaration operation statement assignment block
 %type <linkedlist> S statement_list char_array_elem char_array transition_array_elem transition_array final_state_array_elem final_state_array
 %type <transitiontype> transition
@@ -84,9 +84,9 @@ statement   :   operation ';'                           {$$ = $1;}
             |   ';'                                     {;}
             |   assignment ';'                          {$$ = $1;}
             |   expression ';'                          {$$ = newStatement(EXPRESSION_STMT, $1);}
-			|	IF '(' expression ')' block ELSE block  {$$ = newConditional($3, $5, $7);}
-			|	IF '(' expression ')' block             {$$ = newConditional($3, $5, NULL);}
-            |   WHILE '(' expression ')' block          {$$ = newLoop($3, $5, "\0", "\0");}
+			|	IF '(' boolean_expression ')' block ELSE block  {$$ = newConditional($3, $5, $7);}
+			|	IF '(' boolean_expression ')' block             {$$ = newConditional($3, $5, NULL);}
+            |   WHILE '(' boolean_expression ')' block          {$$ = newLoop($3, $5, "\0", "\0");}
             ;
 
 block       :   '{' statement_list '}'					{$$ = newBlock($2);}
@@ -95,7 +95,7 @@ block       :   '{' statement_list '}'					{$$ = newBlock($2);}
 operation   :   PRINT CHAR            	                {printf("// [DEBUG]: %c\n", (unsigned char)$2);}
             |   declaration                             {$$ = $1;}
             |   definition                              {$$ = $1;}
-            |   RETURN expression                       {$$ = newStatement(RETURN_STMT, $2);}
+            |   RETURN boolean_expression               {$$ = newStatement(RETURN_STMT, $2);}
             ;
 
 declaration :   DEFINE type IDENT                       {$$ = newDeclaration($2, $3, NULL);}
@@ -113,17 +113,21 @@ definition  :   DEFINE type IDENT ASSIGN expression     {
 assignment  :   IDENT ASSIGN expression                 {$$ = newAssignment($1, $3);}
             ;
 
-expression  :   expression OR expression                {$$ = newExpression(OR_OP, $1, $3);}
-            |   expression AND expression               {$$ = newExpression(AND_OP, $1, $3);}
-            |   expression EQ expression                {$$ = newExpression(EQ_OP, $1, $3);}
-            |   expression NE expression                {$$ = newExpression(NE_OP, $1, $3);}
-            |   NOT expression                          {$$ = newExpression(NOT_OP, $2, NULL);}
-            |   '(' expression ')'                      {$$ = newExpression(PARENTHESES_OP, $2, NULL);}
-            |   term                                    {$$ = $1;}
+expression  :   boolean_expression						{$$ = $1;}
 			|	array						            {$$ = $1;}
             |   machine                                 {$$ = $1;}
             |   PARSE STRING WITH IDENT                 {$$ = newParseExpression($4, $2);}
             ;
+
+// TODO: FIX NOMBRE
+boolean_expression	: boolean_expression OR boolean_expression          {$$ = newExpression(OR_OP, $1, $3);}
+            |   boolean_expression AND boolean_expression               {$$ = newExpression(AND_OP, $1, $3);}
+            |   boolean_expression EQ boolean_expression                {$$ = newExpression(EQ_OP, $1, $3);}
+            |   boolean_expression NE boolean_expression                {$$ = newExpression(NE_OP, $1, $3);}
+            |   NOT boolean_expression                          		{$$ = newExpression(NOT_OP, $2, NULL);}
+            |   '(' boolean_expression ')'                      		{$$ = newExpression(PARENTHESES_OP, $2, NULL);}
+            |   term                                    				{$$ = $1;}
+			;
 
 term        :   BOOL                                    {$$ = newBool($1);}
             |   CHAR                                    {$$ = newChar($1);}

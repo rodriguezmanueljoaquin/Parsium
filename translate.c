@@ -98,7 +98,9 @@ static void translateStatement(Statement *statement) {
 			putchar(';');
 			break;
 		case EXPRESSION_STMT:
+			printIndentation();
 			translateExpression(statement->data.expression);
+			putchar(';');
 			break;
 		case BREAK_STMT:
 			break;
@@ -235,7 +237,7 @@ static void translateExpression(Expression *expression) {
 			break;
 		case PARSE_OP:
 			printIndentation();
-			printf("run_machine_%s(\"%s\");", (char *)expression->exp1->value, (char *)expression->exp2->value);
+			printf("run_machine_%s(\"%s\")", (char *)expression->exp1->value, (char *)expression->exp2->value);
 			break;
 		case EXEC_OP:
 			// TODO
