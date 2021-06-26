@@ -19,13 +19,14 @@ static void translateMachineExecutionFunction(LinkedList *machineStates, char *m
 static void translateBlock(Statement *block);
 static void translateLoop(Loop *loop);
 static void translateGlobalVariables(LinkedList *variables);
+static void translatePredicates(LinkedList *predicates);
 
 static size_t indentationLevel = 0;
 
 static char *header = "#include <stdio.h>\n"
 					  "#include <stdbool.h>\n"
 					  "#define N(x) (sizeof(x) / sizeof((x)[0]))\n"
-					  "#define ANY -1\n\n";
+					  "#define ANY NULL\n\n";
 
 static void printIndentation() {
 	for (size_t i = 0; i < indentationLevel; i++) {
@@ -33,10 +34,38 @@ static void printIndentation() {
 	}
 }
 
+static void translatePredicates(LinkedList *predicates){
+	Node *node = predicates->first;
+	Predicate *predicate;
+	
+	node = predicates->first;
+	while (node != NULL) {
+		predicate = node->value;
+		printf("bool %s(char x);\n", predicate->symbol);
+		node = node->next;
+	}
+	putchar('\n');
+
+	node = predicates->first;
+	while (node != NULL) {
+		predicate = node->value;
+		printf("bool %s(char x)", predicate->symbol);
+
+		translateBlock(predicate->block);
+
+		printf("\n");
+		node = node->next;
+	}
+	putchar('\n');
+
+}
+
 void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates, LinkedList *variables) {
 	printf("%s", header);
 	translateGlobalVariables(variables);
-	// TODO: translatePredicates(predicates); -> poner prototipos y luego definirlas
+
+	translatePredicates(predicates); // poner prototipos y luego definirlas
+
 	translateMachineDefinitions(machines);
 
 	Node *currentList = ast->first;
@@ -123,8 +152,6 @@ static void translateStatement(Statement *statement) {
 			printf("return ");
 			translateExpression(statement->data.expression);
 			putchar(';');
-			indentationLevel--;
-			printIndentation();
 			break;
 		case BLOCK_STMT:
 			translateBlock(statement);
@@ -270,7 +297,7 @@ static void translateConstant(ValueType type, void *value) {
 			printf("'%c'", *(char *)value);
 			break;
 		case BOOL_TYPE:
-			printf("%s", *(bool *)value ? "true" : "false");
+			printf("%s", (*(bool *)value) ? "true" : "false");
 			break;
 		case CHAR_ARRAY_TYPE:
 			putchar('{');
@@ -302,8 +329,8 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 		Node *auxTransitionNode = auxStateValue->transitions->first;
 		for (size_t j = 0; auxTransitionNode != NULL; auxTransitionNode = auxTransitionNode->next, j++) {
 			printIndentation();
-			printf("{.when = '%c', .destination = PS_%s_%s},\n",
-				   *(char *)((TransitionType *)auxTransitionNode->value)->when->value, machineSymbol,
+			printf("{.when = %s, .destination = PS_%s_%s},\n",
+				   (char *)((TransitionType *)auxTransitionNode->value)->when->symbol, machineSymbol,
 				   ((TransitionType *)auxTransitionNode->value)->toState);
 		}
 		printIndentation();
@@ -385,7 +412,7 @@ static void translateMachineStructs(Node *firstState, char *machineSymbol) {
 
 	indentationLevel++;
 	printIndentation();
-	printf("char when;\n");
+	printf("bool (*when)(char);\n");
 	printIndentation();
 	printf("parser_state_%s destination;\n", machineSymbol);
 	indentationLevel--;
@@ -406,7 +433,7 @@ static void translateMachineParser(char *machineSymbol) {
 
 	indentationLevel++;
 	printIndentation();
-	printf("if (current_char == states_%s[current_state][j].when || states_%s[current_state][j].when == (char)ANY) {\n",
+	printf("if (states_%s[current_state][j].when == ANY || states_%s[current_state][j].when(current_char)) {\n",
 		   machineSymbol, machineSymbol);
 
 	indentationLevel++;

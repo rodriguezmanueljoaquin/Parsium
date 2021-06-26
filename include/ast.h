@@ -32,12 +32,6 @@ typedef struct Expression {
 	struct Expression *exp1, *exp2;
 } Expression;
 
-typedef struct TransitionType {
-	char *fromState;
-	char *toState;
-	Expression *when;
-} TransitionType;
-
 typedef struct MachineType {
 	LinkedList *transitions;
 	char *initialState;
@@ -73,6 +67,12 @@ typedef struct Predicate {
 	Statement *block;
 } Predicate;
 
+typedef struct TransitionType {
+	char *fromState;
+	char *toState;
+	Predicate *when;
+} TransitionType;
+
 /* Statement nodes para AST */
 struct Statement {
 	StatementType type;
@@ -101,7 +101,7 @@ Expression *newArray(LinkedList *list, ValueType type);
 Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2);
 Expression *newParseExpression(char *machineSymbol, char *string);
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates);
-TransitionType *newTransition(char *fromState, char *toState, Expression *when);
+TransitionType *newTransition(char *fromState, char *toState, char *when);
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative);
 Statement *newAssignment(char *symbol, Expression *value);
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value);

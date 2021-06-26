@@ -167,7 +167,7 @@ transition_array_elem   :   transition                  {$$ = newList(); addToLi
             |   transition_array_elem ',' transition    {addToList($$,$3);}
             ;
 
-transition  :   IDENT ARROW IDENT WHEN expression      {$$ = newTransition($1, $3, $5);}
+transition  :   IDENT ARROW IDENT WHEN IDENT            {$$ = newTransition($1, $3, $5);}
             ;
 
 final_state_array :   '[' final_state_array_elem ']'                {$$ = $2;}

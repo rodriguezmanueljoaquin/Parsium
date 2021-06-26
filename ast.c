@@ -65,11 +65,15 @@ Expression *newArray(LinkedList *list, ValueType type) {
 	return expression;
 }
 
-TransitionType *newTransition(char *fromState, char *toState, Expression *when) {
+TransitionType *newTransition(char *fromState, char *toState, char *when) {
+	Predicate *predicate = findPredicate(when);
+	if (predicate == NULL)
+		parseError("Predicate undefined");
+
 	TransitionType *transition = malloc(sizeof(TransitionType));
 	transition->fromState = fromState;
 	transition->toState = toState;
-	transition->when = when;
+	transition->when = predicate;
 
 	return transition;
 }
