@@ -47,7 +47,7 @@ while                               return WHILE;
 
 !                               	return NOT;
 
-(x)                                 return PREDICATE_PARAM;
+\(x\)                                 return PREDICATE_PARAM;
 
 \"([^\\\"]|\\.)*\"                  { yylval.string = strndup(&yytext[1], yyleng - 1); yylval.string[yyleng-2] = 0; return STRING; }
 [_A-Za-z]([_A-Za-z]|[0-9])*			{ yylval.string = strdup(yytext); return IDENT; }

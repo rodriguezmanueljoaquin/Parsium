@@ -7,7 +7,7 @@
 
 static void translateMachineDefinitions(LinkedList *machines);
 static void translateStatement(Statement *statement);
-static void translateDeclaration(Declaration *declaration);
+static void translateDeclaration(Variable *variable);
 static void translateConditional(Conditional *conditional);
 static void translateAssignment(Assignment *assignment);
 static void translateExpression(Expression *expression);
@@ -18,6 +18,7 @@ static void translateMachineParser(char *machineSymbol);
 static void translateMachineExecutionFunction(LinkedList *machineStates, char *machineSymbol, char *startNodeSymbol);
 static void translateBlock(Statement *block);
 static void translateLoop(Loop *loop);
+static void translateGlobalVariables(LinkedList *variables);
 
 static size_t indentationLevel = 0;
 
@@ -32,8 +33,9 @@ static void printIndentation() {
 	}
 }
 
-void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates) {
+void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates, LinkedList *variables) {
 	printf("%s", header);
+	translateGlobalVariables(variables);
 	// TODO: translatePredicates(predicates); -> poner prototipos y luego definirlas
 	translateMachineDefinitions(machines);
 
@@ -48,6 +50,15 @@ void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates) {
 	indentationLevel--;
 	printIndentation();
 	printf("}\n");
+}
+
+static void translateGlobalVariables(LinkedList *variables) {
+	Node *aux = variables->first;
+	while (aux != NULL) {
+		translateDeclaration(aux->value);
+		aux = aux->next;
+	}
+	putchar('\n');
 }
 
 static void checkMachineStates(LinkedList *machineStates, MachineType *currentMachine) {
@@ -95,8 +106,10 @@ static void translateStatement(Statement *statement) {
 			putchar(';');
 			break;
 		case DECLARE_STMT:
-			translateDeclaration(statement->data.declaration);
-			putchar(';');
+			if(statement->data.declaration->value != NULL) {
+				translateAssignment(newAssignment(statement->data.declaration->symbol, statement->data.declaration->value)->data.assignment);
+				putchar(';');
+			}
 			break;
 		case EXPRESSION_STMT:
 			printIndentation();
@@ -144,9 +157,9 @@ static void translateBlock(Statement *block) {
 	printf("}");
 }
 
-static void translateDeclaration(Declaration *declaration) {
+static void translateDeclaration(Variable *variable) {
 	printIndentation();
-	switch (declaration->type) {
+	switch (variable->type) {
 		case CHAR_TYPE:
 		case CHAR_ARRAY_TYPE:
 			printf("char ");
@@ -175,14 +188,11 @@ static void translateDeclaration(Declaration *declaration) {
 			printf("\n error translateDeclaration() \n");
 			break;
 	}
-	printf("%s", declaration->symbol);
-	if (declaration->type == CHAR_ARRAY_TYPE)
+	printf("%s", variable->symbol);
+	if (variable->type == CHAR_ARRAY_TYPE)
 		printf("[]");
 
-	if (declaration->value != NULL) {
-		printf(" = ");
-		translateExpression(declaration->value);
-	}
+	printf(";\n");
 }
 
 static void translateConditional(Conditional *conditional) {

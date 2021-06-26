@@ -4,6 +4,8 @@
     #include <ast.h>
     #include <linkedlist.h>
     #include <translate.h>
+
+    #define PREDICATE_PARAM_SYMBOL  "x"
     
     enum {TREE_LIST, MACHINE_LIST, LIST_COUNT};
     
@@ -177,11 +179,17 @@ final_state_array_elem   :   IDENT                            {$$ = newList(); a
 
 %%
 int main(int argc, char *argv[]) {
-	variables = newList();
+	
+    variables = newList();
+    Variable *var = malloc(sizeof(Variable));
+	var->symbol = PREDICATE_PARAM_SYMBOL;
+	var->type = CHAR_TYPE;
+    addToList(variables, var);
+
 	predicates = newList();
     LinkedList *args[LIST_COUNT] = {0};
     yyparse(args);
     yylex_destroy();
-    translate(args[TREE_LIST], args[MACHINE_LIST], predicates);
+    translate(args[TREE_LIST], args[MACHINE_LIST], predicates, variables);
     return 0;
 }
