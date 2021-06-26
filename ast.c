@@ -4,6 +4,7 @@
 #include <string.h>
 
 LinkedList *variables;
+LinkedList *predicates;
 
 void parseError(char *message);
 void checkAssignmentType(ValueType type, char *symbol, Expression *value);
@@ -213,10 +214,32 @@ Statement *newBlock(LinkedList *statementList) {
 	return statement;
 }
 
+void newPredicate(char *symbol, Statement *block) {
+	if(findPredicate(symbol) != NULL)
+		parseError("Predicate already defined");
+
+	Predicate *predicate = malloc(sizeof(Predicate));
+	predicate->symbol = symbol;
+	predicate->block = block;
+
+	addToList(predicates, predicate);
+}
+
 Variable *findVariable(LinkedList *list, char *symbol) {
 	Node *aux = list->first;
 	while (aux != NULL) {
 		if (strcmp(((Variable *)aux->value)->symbol, symbol) == 0)
+			return aux->value;
+
+		aux = aux->next;
+	}
+	return NULL;
+}
+
+Predicate *findPredicate(char *symbol) {
+	Node *aux = predicates->first;
+	while (aux != NULL) {
+		if (strcmp(((Predicate *)aux->value)->symbol, symbol) == 0)
 			return aux->value;
 
 		aux = aux->next;

@@ -10,6 +10,7 @@
     extern int yylineno;
 
 	extern LinkedList *variables;
+	extern LinkedList *predicates;
 
     int yylex_destroy();
     int yylex();
@@ -28,9 +29,6 @@
     char *string; 
     bool boolean; 
     ValueType valuetype;
-    // struct machine *Machine; 
-    // struct transition *Transition; 
-    // bool (*)(char) Predicate;
     Expression *expression;
     Assignment *assignment;
     Statement *statement;
@@ -38,6 +36,7 @@
     TransitionType *transitiontype;
 }
 
+//  FIXME: cambiar esto por variables globales?
 %parse-param { LinkedList **args }
 
 %type <valuetype> type
@@ -49,8 +48,6 @@
 %token <string> IDENT STRING
 %token DEFINE
 %token ASSIGN
-/* %token WITH
-%token RETURN */
 %token <character> CHAR
 %token <boolean> BOOL
 %token CHAR_DEF BOOL_DEF CHAR_ARRAY_DEF MACHINE_DEF TRANSITIONS_DEF INITIAL_STATE_DEF FINAL_STATES_DEF PREDICATE_DEF
@@ -59,7 +56,8 @@
 %token RETURN
 %token ARROW
 %token WHEN PARSE WITH
-%token IF ELSE FOR WHILE
+%token IF ELSE WHILE
+%token PREDICATE_PARAM
 
 %right ASSIGN
 %left  OR
@@ -73,7 +71,10 @@
 %%
 
 S 			:	S statement								{if($2 != NULL) addToList($1, $2);}
-			|	/* empty */								{args[TREE_LIST] = newList(); args[MACHINE_LIST] = newList(); $$ = args[TREE_LIST];}
+			|	/* empty */								{   args[TREE_LIST] = newList(); 
+                                                            args[MACHINE_LIST] = newList(); 
+                                                            $$ = args[TREE_LIST];
+                                                        }
 			;
 
 statement_list	: statement_list statement 				{if($2 != NULL) addToList($1, $2);}
@@ -108,6 +109,10 @@ definition  :   DEFINE type IDENT ASSIGN expression     {
                                                                 $$ = NULL; // para que no se guarde en TREE_LIST
                                                             }
                                                         }
+            |   DEFINE PREDICATE_DEF IDENT ASSIGN PREDICATE_PARAM block {
+                                                                            $$ = NULL;
+                                                                            newPredicate($3, $6);
+                                                                        }
             ;
 
 assignment  :   IDENT ASSIGN expression                 {$$ = newAssignment($1, $3);}
@@ -169,25 +174,14 @@ final_state_array :   '[' final_state_array_elem ']'                {$$ = $2;}
 final_state_array_elem   :   IDENT                            {$$ = newList(); addToList($$, $1);}
             |   final_state_array_elem ',' IDENT              {addToList($$,$3);}
             ;
-/* return      :   'return' boolean_exp    {;} */
-
-/* new_predicate   : '(' parameter ')' '{' statement return ';' '}'       {
-    bool predicate(char $2) {
-        $5 
-        $6;
-    }
-
-    $$ = predicate;
-    }
-    ;
-    */
 
 %%
 int main(int argc, char *argv[]) {
 	variables = newList();
+	predicates = newList();
     LinkedList *args[LIST_COUNT] = {0};
     yyparse(args);
     yylex_destroy();
-    translate(args[TREE_LIST], args[MACHINE_LIST]);
+    translate(args[TREE_LIST], args[MACHINE_LIST], predicates);
     return 0;
 }

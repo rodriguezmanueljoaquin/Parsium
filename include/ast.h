@@ -55,10 +55,6 @@ typedef struct Assignment {
 	Expression *expression;
 } Assignment;
 
-// typedef struct Loop {
-// 	// para despues, deberia recibir una coleccion, tener un statement, y una variable del elemento actual
-// } Loop;
-
 typedef struct Declaration {
 	char *symbol;
 	ValueType type;
@@ -71,6 +67,11 @@ typedef struct Loop {
 	char *init;
 	char *increment;
 } Loop;
+
+typedef struct Predicate {
+	char *symbol;
+	Statement *block;
+} Predicate;
 
 /* Statement nodes para AST */
 struct Statement {
@@ -107,7 +108,9 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value);
 Statement *newLoop(Expression *condition, Statement *block, char *init, char *increment);
 Statement *newStatement(StatementType type, Expression* expression);
 Statement *newBlock(LinkedList *statementList);
+void newPredicate(char *symbol, Statement *block);
 
 Variable *findVariable(LinkedList *list, char *symbol);
+Predicate *findPredicate(char *symbol);
 
 #endif

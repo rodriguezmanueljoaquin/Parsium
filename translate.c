@@ -32,8 +32,9 @@ static void printIndentation() {
 	}
 }
 
-void translate(LinkedList *ast, LinkedList *machines) {
+void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates) {
 	printf("%s", header);
+	// TODO: translatePredicates(predicates); -> poner prototipos y luego definirlas
 	translateMachineDefinitions(machines);
 
 	Node *currentList = ast->first;
