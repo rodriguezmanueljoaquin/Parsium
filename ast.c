@@ -1,4 +1,5 @@
 #include <ast.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,7 +8,8 @@ LinkedList *variables;
 LinkedList *predicates;
 
 void parseError(char *message);
-void checkAssignmentType(ValueType type, Expression *value);
+void checkTypeWithExit(ValueType type, Expression *value);
+bool checkType(ValueType type, Expression *value);
 
 void parseError(char *message) {
 	fprintf(stderr, "Syntax error: %s\n", message);
@@ -104,18 +106,45 @@ Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *
 }
 
 Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) {
-	ValueType expType;
+	ValueType expType = 0;
 
 	switch (op) {
 		case AND_OP:
 		case OR_OP:
+			checkTypeWithExit(BOOL_TYPE, exp2);
 		case NOT_OP:
+			checkTypeWithExit(BOOL_TYPE, exp1);
 		case PARSE_OP:
-			checkAssignmentType(BOOL_TYPE, exp1);
-			checkAssignmentType(BOOL_TYPE, exp2);
 		case EQ_OP:
 		case NE_OP:
 			expType = BOOL_TYPE;
+			break;
+		case GT_OP:
+		case LT_OP:
+		case GE_OP:
+		case LE_OP:
+			checkTypeWithExit(INTEGER_TYPE, exp1);
+			checkTypeWithExit(INTEGER_TYPE, exp2);
+			expType = BOOL_TYPE;
+			break;
+		case MULT_OP:
+		case DIV_OP:
+		case MOD_OP:
+		case PLUS_OP:
+		case MINUS_OP:
+			if (exp1 != NULL)
+				checkTypeWithExit(INTEGER_TYPE, exp1);
+			checkTypeWithExit(INTEGER_TYPE, exp2);
+			expType = INTEGER_TYPE;
+			break;
+		case PARENTHESES_OP:
+			// HAY QUE CHECKEAR TIPO SIN MATAR AL COMPILADOR
+			if (checkType(INTEGER_TYPE, exp1))
+				expType = INTEGER_TYPE;
+			else if (checkType(BOOL_TYPE, exp1))
+				expType = BOOL_TYPE;
+			else
+				parseError("Parentheses operator may only be used with integer and boolean values");
 			break;
 		case EXEC_OP:
 		case SYMBOL_OP:
@@ -151,7 +180,7 @@ Expression *newParseExpression(char *machineSymbol, char *string) {
 }
 
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative) {
-	checkAssignmentType(BOOL_TYPE, condition);
+	checkTypeWithExit(BOOL_TYPE, condition);
 
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.conditional = malloc(sizeof(Conditional));
@@ -162,14 +191,18 @@ Statement *newConditional(Expression *condition, Statement *affirmative, Stateme
 	return statement;
 }
 
-void checkAssignmentType(ValueType type, Expression *value) {
-	if (value != NULL && type != value->type) {
-		if (value->type != SYMBOL_TYPE)
-			parseError("Assignment conflict");
+void checkTypeWithExit(ValueType type, Expression *value) {
+	if (!checkType(type, value))
+		parseError("Assignment conflict");
+}
 
-		if (type != findVariable(variables, value->value)->type)
-			parseError("Assignment conflict");
+bool checkType(ValueType type, Expression *value) {
+	if (value != NULL && type != value->type) {
+		if (value->type != SYMBOL_TYPE || type != findVariable(variables, value->value)->type)
+			return false;
 	}
+
+	return true;
 }
 
 Statement *newAssignment(char *symbol, Expression *value) {
@@ -177,7 +210,7 @@ Statement *newAssignment(char *symbol, Expression *value) {
 	if (var == NULL)
 		parseError("Variable undefined");
 
-	checkAssignmentType(var->type, value);
+	checkTypeWithExit(var->type, value);
 
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.assignment = malloc(sizeof(Assignment));
@@ -191,7 +224,7 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 	if (findVariable(variables, symbol) != NULL)
 		parseError("Variable already defined");
 
-	checkAssignmentType(type, value);
+	checkTypeWithExit(type, value);
 
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.declaration = malloc(sizeof(Declaration));

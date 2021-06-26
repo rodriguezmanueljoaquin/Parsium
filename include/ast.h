@@ -4,10 +4,38 @@
 
 #include <linkedlist.h>
 #include <stdbool.h>
+typedef enum {
+	AND_OP,
+	OR_OP,
+	NOT_OP,
+	EQ_OP,
+	NE_OP,
+	PARENTHESES_OP,
+	EXEC_OP,
+	SYMBOL_OP,
+	CONST_OP,
+	PARSE_OP,
+	PLUS_OP,
+	MINUS_OP,
+	MULT_OP,
+	DIV_OP,
+	MOD_OP,
+	GT_OP,
+	LT_OP,
+	GE_OP,
+	LE_OP
+} OperationType;
 
-typedef enum { AND_OP, OR_OP, NOT_OP, EQ_OP, NE_OP, PARENTHESES_OP, EXEC_OP, SYMBOL_OP, CONST_OP, PARSE_OP } OperationType;
-
-typedef enum { CONDITIONAL_STMT, LOOP_STMT, ASSIGN_STMT, DECLARE_STMT, BREAK_STMT, RETURN_STMT, BLOCK_STMT, EXPRESSION_STMT } StatementType;
+typedef enum {
+	CONDITIONAL_STMT,
+	LOOP_STMT,
+	ASSIGN_STMT,
+	DECLARE_STMT,
+	BREAK_STMT,
+	RETURN_STMT,
+	BLOCK_STMT,
+	EXPRESSION_STMT
+} StatementType;
 
 typedef enum {
 	CHAR_TYPE,
@@ -37,7 +65,7 @@ typedef struct Expression {
 typedef struct MachineType {
 	LinkedList *transitions;
 	char *initialState;
-	LinkedList *finalStates;		//lista de simbolos
+	LinkedList *finalStates; // lista de simbolos
 } MachineType;
 
 typedef struct Conditional {
@@ -109,7 +137,7 @@ Statement *newConditional(Expression *condition, Statement *affirmative, Stateme
 Statement *newAssignment(char *symbol, Expression *value);
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value);
 Statement *newLoop(Expression *condition, Statement *block, char *init, char *increment);
-Statement *newStatement(StatementType type, Expression* expression);
+Statement *newStatement(StatementType type, Expression *expression);
 Statement *newBlock(LinkedList *statementList);
 void newPredicate(char *symbol, Statement *block);
 

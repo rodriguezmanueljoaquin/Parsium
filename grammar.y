@@ -43,7 +43,7 @@
 %parse-param { LinkedList **args }
 
 %type <valuetype> type
-%type <expression> term expression boolean_expression array machine 
+%type <expression> term expression binary_operation unary_operation array machine 
 %type <statement> definition declaration operation statement assignment block
 %type <linkedlist> S statement_list char_array_elem char_array transition_array_elem transition_array final_state_array_elem final_state_array
 %type <transitiontype> transition
@@ -58,6 +58,7 @@
 %token AND OR EQ NE NOT
 %token PRINT
 %token RETURN
+%token MACHINE_OPEN MACHINE_CLOSE
 %token ARROW
 %token WHEN PARSE WITH
 %token IF ELSE WHILE
@@ -67,7 +68,9 @@
 %left  OR
 %left  AND
 %left  NOT
-%nonassoc EQ NE
+%nonassoc LT GT LE GE EQ NE
+%left PLUS MINUS
+%left MULT DIV MOD
 %nonassoc CHAR_DEF BOOL_DEF
 
 %start S
@@ -89,9 +92,9 @@ statement   :   operation ';'                           {$$ = $1;}
             |   ';'                                     {;}
             |   assignment ';'                          {$$ = $1;}
             |   expression ';'                          {$$ = newStatement(EXPRESSION_STMT, $1);}
-			|	IF '(' boolean_expression ')' block ELSE block  {$$ = newConditional($3, $5, $7);}
-			|	IF '(' boolean_expression ')' block             {$$ = newConditional($3, $5, NULL);}
-            |   WHILE '(' boolean_expression ')' block          {$$ = newLoop($3, $5, "\0", "\0");}
+			|	IF '(' expression ')' block ELSE block  {$$ = newConditional($3, $5, $7);}
+			|	IF '(' expression ')' block             {$$ = newConditional($3, $5, NULL);}
+            |   WHILE '(' expression ')' block          {$$ = newLoop($3, $5, "\0", "\0");}
             ;
 
 block       :   '{' statement_list '}'					{$$ = newBlock($2);}
@@ -100,7 +103,8 @@ block       :   '{' statement_list '}'					{$$ = newBlock($2);}
 operation   :   PRINT CHAR            	                {printf("// [DEBUG]: %c\n", (unsigned char)$2);}
             |   declaration                             {$$ = $1;}
             |   definition                              {$$ = $1;}
-            |   RETURN boolean_expression               {$$ = newStatement(RETURN_STMT, $2);}
+            //TODO: Validar que retorne algo booleano
+            |   RETURN expression                       {$$ = newStatement(RETURN_STMT, $2);}
             ;
 
 declaration :   DEFINE type IDENT                       {$$ = newDeclaration($2, $3, NULL);}
@@ -122,21 +126,33 @@ definition  :   DEFINE type IDENT ASSIGN expression     {
 assignment  :   IDENT ASSIGN expression                 {$$ = newAssignment($1, $3);}
             ;
 
-expression  :   boolean_expression						{$$ = $1;}
+expression  :   binary_operation						{$$ = $1;}
+            |   unary_operation                         {$$ = $1;}
 			|	array						            {$$ = $1;}
             |   machine                                 {$$ = $1;}
             |   PARSE STRING WITH IDENT                 {$$ = newParseExpression($4, $2);}
             ;
 
-// TODO: FIX NOMBRE
-boolean_expression	: boolean_expression OR boolean_expression          {$$ = newExpression(OR_OP, $1, $3);}
-            |   boolean_expression AND boolean_expression               {$$ = newExpression(AND_OP, $1, $3);}
-            |   boolean_expression EQ boolean_expression                {$$ = newExpression(EQ_OP, $1, $3);}
-            |   boolean_expression NE boolean_expression                {$$ = newExpression(NE_OP, $1, $3);}
-            |   NOT boolean_expression                          		{$$ = newExpression(NOT_OP, $2, NULL);}
-            |   '(' boolean_expression ')'                      		{$$ = newExpression(PARENTHESES_OP, $2, NULL);}
-            |   term                                    				{$$ = $1;}
-			;
+binary_operation    :   expression OR expression        {$$ = newExpression(OR_OP, $1, $3);}
+                    |   expression AND expression       {$$ = newExpression(AND_OP, $1, $3);}
+                    |   expression EQ expression        {$$ = newExpression(EQ_OP, $1, $3);}
+                    |   expression NE expression        {$$ = newExpression(NE_OP, $1, $3);}
+                    |   expression PLUS expression      {$$ = newExpression(PLUS_OP, $1, $3);}
+                    |   expression MINUS expression     {$$ = newExpression(MINUS_OP, $1, $3);}
+                    |   expression MULT expression      {$$ = newExpression(MULT_OP, $1, $3);}
+                    |   expression DIV expression       {$$ = newExpression(DIV_OP, $1, $3);}
+                    |   expression MOD expression       {$$ = newExpression(MOD_OP, $1, $3);}
+                    |   expression GT expression        {$$ = newExpression(GT_OP, $1, $3);}
+                    |   expression LT expression        {$$ = newExpression(LT_OP, $1, $3);}
+                    |   expression GE expression        {$$ = newExpression(GE_OP, $1, $3);}
+                    |   expression LE expression        {$$ = newExpression(LE_OP, $1, $3);}
+                    ;
+
+unary_operation     :   '(' expression ')'                  {$$ = newExpression(PARENTHESES_OP, $2, NULL);}
+                    |   NOT expression                      {$$ = newExpression(NOT_OP, $2, NULL);}
+                    |   MINUS expression                    {$$ = newExpression(MINUS_OP, NULL, $2);}
+                    |   PLUS expression                     {$$ = newExpression(PLUS_OP, NULL, $2);}
+                    |   term                                {$$ = $1;}
 
 term        :   BOOL                                    {$$ = newBool($1);}
             |   IDENT                                   {$$ = newSymbol($1);}
@@ -161,7 +177,7 @@ char_array_elem :   CHAR               				    {$$ = newList(); addToList($$, ne
             |   char_array_elem ',' CHAR    		    {addToList($$,newChar($3));}
             ;
 
-machine     :   '<' TRANSITIONS_DEF ASSIGN transition_array ',' INITIAL_STATE_DEF ASSIGN IDENT ',' FINAL_STATES_DEF ASSIGN final_state_array '>' {$$ = newMachine($4, $8, $12);}
+machine     :   MACHINE_OPEN TRANSITIONS_DEF ASSIGN transition_array ',' INITIAL_STATE_DEF ASSIGN IDENT ',' FINAL_STATES_DEF ASSIGN final_state_array MACHINE_CLOSE {$$ = newMachine($4, $8, $12);}
             ;
 
 transition_array    :   '[' transition_array_elem ']'   {$$ = $2;}

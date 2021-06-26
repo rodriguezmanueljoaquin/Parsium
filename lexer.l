@@ -17,13 +17,13 @@
 \/\/.*\n?
 [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 [/][*]				            	{ yy_fatal_error("Unterminated comment"); }
-Char                            	return CHAR_DEF;
-Char\[\]							return CHAR_ARRAY_DEF;
-Bool                            	return BOOL_DEF;
+char                            	return CHAR_DEF;
+char\[\]							return CHAR_ARRAY_DEF;
+bool                            	return BOOL_DEF;
 def                             	return DEFINE;
-Machine							    return MACHINE_DEF;
-Predicate                           return PREDICATE_DEF;
-Int									return INTEGER_DEF;
+machine							    return MACHINE_DEF;
+predicate                           return PREDICATE_DEF;
+int									return INTEGER_DEF;
 
 transitions                         return TRANSITIONS_DEF;
 initialState                        return INITIAL_STATE_DEF;
@@ -47,8 +47,21 @@ while                               return WHILE;
 &&                              	return AND;
 ==                              	return EQ;
 !=                              	return NE;
-
 !                               	return NOT;
+
+>									return GT;
+\<									return LT;
+>=									return GE;
+\<=									return LE;
+
+\+									return PLUS;
+-									return MINUS;
+\*									return MULT;
+\/									return DIV;
+%									return MOD;
+
+\<\<									return MACHINE_OPEN;
+>>									return MACHINE_CLOSE;
 
 \(x\)                               return PREDICATE_PARAM;
 

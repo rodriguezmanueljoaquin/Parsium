@@ -272,10 +272,59 @@ static void translateExpression(Expression *expression) {
 			printf(" != ");
 			translateExpression(expression->exp2);
 			break;
+		case GT_OP:
+			translateExpression(expression->exp1);
+			printf(" > ");
+			translateExpression(expression->exp2);
+			break;
+		case LT_OP:
+			translateExpression(expression->exp1);
+			printf(" < ");
+			translateExpression(expression->exp2);
+			break;
+		case GE_OP:
+			translateExpression(expression->exp1);
+			printf(" >= ");
+			translateExpression(expression->exp2);
+			break;
+		case LE_OP:
+			translateExpression(expression->exp1);
+			printf(" <= ");
+			translateExpression(expression->exp2);
+			break;
 		case PARENTHESES_OP:
 			printf("(");
 			translateExpression(expression->exp1);
 			printf(")");
+			break;
+		case PLUS_OP:
+			if (expression->exp1 != NULL) {
+				translateExpression(expression->exp1);
+			}
+			printf(" + ");
+			translateExpression(expression->exp2);
+			break;
+		case MINUS_OP:
+			if (expression->exp1 != NULL) {
+				translateExpression(expression->exp1);	
+			} 
+			printf(" - ");
+			translateExpression(expression->exp2);
+			break;
+		case MULT_OP:
+			translateExpression(expression->exp1);
+			printf(" * ");
+			translateExpression(expression->exp2);
+			break;
+		case DIV_OP:
+			translateExpression(expression->exp1);
+			printf(" / ");
+			translateExpression(expression->exp2);
+			break;
+		case MOD_OP:
+			translateExpression(expression->exp1);
+			printf(" %% ");
+			translateExpression(expression->exp2);
 			break;
 		case PARSE_OP:
 			printIndentation();
