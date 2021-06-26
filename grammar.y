@@ -29,7 +29,8 @@
 %union  {
     char character; 
     char *string; 
-    bool boolean; 
+    bool boolean;
+	long integer;
     ValueType valuetype;
     Expression *expression;
     Assignment *assignment;
@@ -48,11 +49,12 @@
 %type <transitiontype> transition
 
 %token <string> IDENT STRING
+%token <integer> INTEGER
 %token DEFINE
 %token ASSIGN
 %token <character> CHAR
 %token <boolean> BOOL
-%token CHAR_DEF BOOL_DEF CHAR_ARRAY_DEF MACHINE_DEF TRANSITIONS_DEF INITIAL_STATE_DEF FINAL_STATES_DEF PREDICATE_DEF
+%token CHAR_DEF BOOL_DEF CHAR_ARRAY_DEF MACHINE_DEF TRANSITIONS_DEF INITIAL_STATE_DEF FINAL_STATES_DEF PREDICATE_DEF INTEGER_DEF
 %token AND OR EQ NE NOT
 %token PRINT
 %token RETURN
@@ -137,15 +139,17 @@ boolean_expression	: boolean_expression OR boolean_expression          {$$ = new
 			;
 
 term        :   BOOL                                    {$$ = newBool($1);}
-            |   CHAR                                    {$$ = newChar($1);}
             |   IDENT                                   {$$ = newSymbol($1);}
+            |   CHAR                                    {$$ = newChar($1);}
             |   STRING                                  {$$ = newString($1);}
+			|	INTEGER									{$$ = newInteger($1);}
             ;
 
 type        :   BOOL_DEF                                {$$ = BOOL_TYPE;}
             |   CHAR_DEF                                {$$ = CHAR_TYPE;}
             |   CHAR_ARRAY_DEF                          {$$ = CHAR_ARRAY_TYPE;}
             |   MACHINE_DEF                             {$$ = MACHINE_TYPE;}
+			|	INTEGER_DEF								{$$ = INTEGER_TYPE;}
 			;
 
 array		:	char_array					            {$$ = newArray($1, CHAR_ARRAY_TYPE);}

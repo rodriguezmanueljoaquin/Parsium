@@ -34,10 +34,10 @@ static void printIndentation() {
 	}
 }
 
-static void translatePredicates(LinkedList *predicates){
+static void translatePredicates(LinkedList *predicates) {
 	Node *node = predicates->first;
 	Predicate *predicate;
-	
+
 	node = predicates->first;
 	while (node != NULL) {
 		predicate = node->value;
@@ -57,7 +57,6 @@ static void translatePredicates(LinkedList *predicates){
 		node = node->next;
 	}
 	putchar('\n');
-
 }
 
 void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates, LinkedList *variables) {
@@ -135,8 +134,9 @@ static void translateStatement(Statement *statement) {
 			putchar(';');
 			break;
 		case DECLARE_STMT:
-			if(statement->data.declaration->value != NULL) {
-				translateAssignment(newAssignment(statement->data.declaration->symbol, statement->data.declaration->value)->data.assignment);
+			if (statement->data.declaration->value != NULL) {
+				translateAssignment(
+					newAssignment(statement->data.declaration->symbol, statement->data.declaration->value)->data.assignment);
 				putchar(';');
 			}
 			break;
@@ -196,6 +196,10 @@ static void translateDeclaration(Variable *variable) {
 			break;
 		case STRING_TYPE:
 			printf("char *");
+			break;
+		case INTEGER_TYPE:
+		case INTEGER_ARRAY_TYPE:
+			printf("long ");
 			break;
 		case MACHINE_TYPE:
 			return;
@@ -299,6 +303,9 @@ static void translateConstant(ValueType type, void *value) {
 		case BOOL_TYPE:
 			printf("%s", (*(bool *)value) ? "true" : "false");
 			break;
+		case INTEGER_TYPE:
+			printf("%ld", *(long *)value);
+			break;
 		case CHAR_ARRAY_TYPE:
 			putchar('{');
 			Node *current = ((LinkedList *)value)->first;
@@ -329,9 +336,8 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 		Node *auxTransitionNode = auxStateValue->transitions->first;
 		for (size_t j = 0; auxTransitionNode != NULL; auxTransitionNode = auxTransitionNode->next, j++) {
 			printIndentation();
-			printf("{.when = %s, .destination = PS_%s_%s},\n",
-				   (char *)((TransitionType *)auxTransitionNode->value)->when->symbol, machineSymbol,
-				   ((TransitionType *)auxTransitionNode->value)->toState);
+			printf("{.when = %s, .destination = PS_%s_%s},\n", (char *)((TransitionType *)auxTransitionNode->value)->when->symbol,
+				   machineSymbol, ((TransitionType *)auxTransitionNode->value)->toState);
 		}
 		printIndentation();
 		printf("{.when = ANY, .destination = PS_%s_ERROR},\n", machineSymbol);
@@ -433,8 +439,8 @@ static void translateMachineParser(char *machineSymbol) {
 
 	indentationLevel++;
 	printIndentation();
-	printf("if (states_%s[current_state][j].when == ANY || states_%s[current_state][j].when(current_char)) {\n",
-		   machineSymbol, machineSymbol);
+	printf("if (states_%s[current_state][j].when == ANY || states_%s[current_state][j].when(current_char)) {\n", machineSymbol,
+		   machineSymbol);
 
 	indentationLevel++;
 	printIndentation();

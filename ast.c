@@ -7,7 +7,7 @@ LinkedList *variables;
 LinkedList *predicates;
 
 void parseError(char *message);
-void checkAssignmentType(ValueType type, char *symbol, Expression *value);
+void checkAssignmentType(ValueType type, Expression *value);
 
 void parseError(char *message) {
 	fprintf(stderr, "Syntax error: %s\n", message);
@@ -21,6 +21,17 @@ Expression *newSymbol(char *identifier) {
 	expression->type = SYMBOL_TYPE;
 	expression->op = SYMBOL_OP;
 	expression->value = identifier;
+
+	return expression;
+}
+
+Expression *newInteger(long number) {
+	long *value = malloc(sizeof(long));
+	*value = number;
+	Expression *expression = malloc(sizeof(Expression));
+	expression->type = INTEGER_TYPE;
+	expression->op = CONST_OP;
+	expression->value = value;
 
 	return expression;
 }
@@ -99,9 +110,11 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 		case AND_OP:
 		case OR_OP:
 		case NOT_OP:
+		case PARSE_OP:
+			checkAssignmentType(BOOL_TYPE, exp1);
+			checkAssignmentType(BOOL_TYPE, exp2);
 		case EQ_OP:
 		case NE_OP:
-		case PARSE_OP:
 			expType = BOOL_TYPE;
 			break;
 		case EXEC_OP:
@@ -121,11 +134,11 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 	return expression;
 }
 
-Expression *newParseExpression(char *machineSymbol, char *string){
+Expression *newParseExpression(char *machineSymbol, char *string) {
 	Variable *var = findVariable(variables, machineSymbol);
-	if(var == NULL)
+	if (var == NULL)
 		parseError("Machine undefined");
-	if(var->type != MACHINE_TYPE)
+	if (var->type != MACHINE_TYPE)
 		parseError("Variable type conflict in parse");
 
 	Expression *expression = malloc(sizeof(Expression));
@@ -138,6 +151,8 @@ Expression *newParseExpression(char *machineSymbol, char *string){
 }
 
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative) {
+	checkAssignmentType(BOOL_TYPE, condition);
+
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.conditional = malloc(sizeof(Conditional));
 	statement->data.conditional->condition = condition;
@@ -147,7 +162,7 @@ Statement *newConditional(Expression *condition, Statement *affirmative, Stateme
 	return statement;
 }
 
-void checkAssignmentType(ValueType type, char *symbol, Expression *value) {
+void checkAssignmentType(ValueType type, Expression *value) {
 	if (value != NULL && type != value->type) {
 		if (value->type != SYMBOL_TYPE)
 			parseError("Assignment conflict");
@@ -162,7 +177,7 @@ Statement *newAssignment(char *symbol, Expression *value) {
 	if (var == NULL)
 		parseError("Variable undefined");
 
-	checkAssignmentType(var->type, symbol, value);
+	checkAssignmentType(var->type, value);
 
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.assignment = malloc(sizeof(Assignment));
@@ -176,7 +191,7 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 	if (findVariable(variables, symbol) != NULL)
 		parseError("Variable already defined");
 
-	checkAssignmentType(type, symbol, value);
+	checkAssignmentType(type, value);
 
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.declaration = malloc(sizeof(Declaration));
@@ -219,7 +234,7 @@ Statement *newBlock(LinkedList *statementList) {
 }
 
 void newPredicate(char *symbol, Statement *block) {
-	if(findPredicate(symbol) != NULL)
+	if (findPredicate(symbol) != NULL)
 		parseError("Predicate already defined");
 
 	Predicate *predicate = malloc(sizeof(Predicate));

@@ -14,6 +14,8 @@ typedef enum {
 	BOOL_TYPE,
 	SYMBOL_TYPE,
 	STRING_TYPE,
+	INTEGER_TYPE,
+	INTEGER_ARRAY_TYPE,
 	MACHINE_TYPE,
 	PREDICATE_TYPE,
 	TRANSITION_TYPE,
@@ -97,6 +99,7 @@ Expression *newSymbol(char *identifier);
 Expression *newString(char *string);
 Expression *newChar(char c);
 Expression *newBool(bool b);
+Expression *newInteger(long number);
 Expression *newArray(LinkedList *list, ValueType type);
 Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2);
 Expression *newParseExpression(char *machineSymbol, char *string);
