@@ -86,11 +86,20 @@ struct Statement {
 	} data;
 };
 
+typedef struct Variable {
+	ValueType type;
+	char *symbol;
+} Variable;
+
+void parseError(char *message);
+
 Expression *newSymbol(char *identifier);
+Expression *newString(char *string);
 Expression *newChar(char c);
 Expression *newBool(bool b);
 Expression *newArray(LinkedList *list, ValueType type);
 Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2);
+Expression *newParseExpression(char *machineSymbol, char *string);
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates);
 TransitionType *newTransition(char *fromState, char *toState, Expression *when);
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative);
@@ -99,5 +108,7 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value);
 Statement *newLoop(Expression *condition, Statement *block, char *init, char *increment);
 Statement *newStatement(StatementType type, Expression* expression);
 Statement *newBlock(LinkedList *statementList);
+
+Variable *findVariable(LinkedList *list, char *symbol);
 
 #endif

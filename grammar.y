@@ -8,6 +8,9 @@
     enum {TREE_LIST, MACHINE_LIST, LIST_COUNT};
     
     extern int yylineno;
+
+	extern LinkedList *variables;
+
     int yylex_destroy();
     int yylex();
 
@@ -40,7 +43,7 @@
 %type <valuetype> type
 %type <expression> term expression array machine
 %type <statement> definition declaration operation statement assignment block
-%type <linkedlist> S statement_list char_array_elem char_array transition_array_elem transition_array ident_array_elem ident_array
+%type <linkedlist> S statement_list char_array_elem char_array transition_array_elem transition_array final_state_array_elem final_state_array
 %type <transitiontype> transition
 
 %token <string> IDENT STRING
@@ -116,16 +119,16 @@ expression  :   expression OR expression                {$$ = newExpression(OR_O
             |   expression NE expression                {$$ = newExpression(NE_OP, $1, $3);}
             |   NOT expression                          {$$ = newExpression(NOT_OP, $2, NULL);}
             |   '(' expression ')'                      {$$ = newExpression(PARENTHESES_OP, $2, NULL);}
+            |   term                                    {$$ = $1;}
 			|	array						            {$$ = $1;}
             |   machine                                 {$$ = $1;}
-            |   term                                    {$$ = $1;}
-            |   PARSE STRING WITH IDENT                 {$$ = newExpression(PARSE_OP, newSymbol($4), newSymbol($2));}
+            |   PARSE STRING WITH IDENT                 {$$ = newParseExpression($4, $2);}
             ;
 
 term        :   BOOL                                    {$$ = newBool($1);}
             |   CHAR                                    {$$ = newChar($1);}
             |   IDENT                                   {$$ = newSymbol($1);}
-            |   STRING                                  {$$ = newSymbol($1);}
+            |   STRING                                  {$$ = newString($1);}
             ;
 
 type        :   BOOL_DEF                                {$$ = BOOL_TYPE;}
@@ -139,11 +142,11 @@ array		:	char_array					            {$$ = newArray($1, CHAR_ARRAY_TYPE);}
 char_array  :  '[' char_array_elem ']'                  {$$ = $2;}
             ;
 
-char_array_elem :   term               				    {$$ = newList(); addToList($$, $1);}
-            |   char_array_elem ',' term    		    {addToList($$,$3);}
+char_array_elem :   CHAR               				    {$$ = newList(); addToList($$, newChar($1));}
+            |   char_array_elem ',' CHAR    		    {addToList($$,newChar($3));}
             ;
 
-machine     :   '<' TRANSITIONS_DEF ASSIGN transition_array ',' INITIAL_STATE_DEF ASSIGN IDENT ',' FINAL_STATES_DEF ASSIGN ident_array '>' {$$ = newMachine($4, $8, $12);}
+machine     :   '<' TRANSITIONS_DEF ASSIGN transition_array ',' INITIAL_STATE_DEF ASSIGN IDENT ',' FINAL_STATES_DEF ASSIGN final_state_array '>' {$$ = newMachine($4, $8, $12);}
             ;
 
 transition_array    :   '[' transition_array_elem ']'   {$$ = $2;}
@@ -156,11 +159,11 @@ transition_array_elem   :   transition                  {$$ = newList(); addToLi
 transition  :   IDENT ARROW IDENT WHEN expression      {$$ = newTransition($1, $3, $5);}
             ;
 
-ident_array :   '[' ident_array_elem ']'                {$$ = $2;}
+final_state_array :   '[' final_state_array_elem ']'                {$$ = $2;}
             ;
 
-ident_array_elem   :   IDENT                            {$$ = newList(); addToList($$, $1);}
-            |   ident_array_elem ',' IDENT              {addToList($$,$3);}
+final_state_array_elem   :   IDENT                            {$$ = newList(); addToList($$, $1);}
+            |   final_state_array_elem ',' IDENT              {addToList($$,$3);}
             ;
 /* return      :   'return' boolean_exp    {;} */
 
@@ -176,8 +179,8 @@ ident_array_elem   :   IDENT                            {$$ = newList(); addToLi
     */
 
 %%
-
 int main(int argc, char *argv[]) {
+	variables = newList();
     LinkedList *args[LIST_COUNT] = {0};
     yyparse(args);
     yylex_destroy();

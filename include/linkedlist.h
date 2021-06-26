@@ -2,6 +2,7 @@
 #define LINKED_LIST_H
 
 #include <stdbool.h>
+#include <ast.h>
 
 typedef struct Node {
 	void *value;

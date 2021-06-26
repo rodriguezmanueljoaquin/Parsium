@@ -1,8 +1,21 @@
 #include <ast.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+LinkedList *variables;
+
+void parseError(char *message);
+void checkAssignmentType(ValueType type, char *symbol, Expression *value);
+
+void parseError(char *message) {
+	fprintf(stderr, "Syntax error: %s\n", message);
+	exit(-1);
+}
 
 Expression *newSymbol(char *identifier) {
+	if (findVariable(variables, identifier) == NULL)
+		parseError("Variable undefined");
 	Expression *expression = malloc(sizeof(Expression));
 	expression->type = SYMBOL_TYPE;
 	expression->op = SYMBOL_OP;
@@ -11,10 +24,19 @@ Expression *newSymbol(char *identifier) {
 	return expression;
 }
 
-Expression *newChar(char c) {
+Expression *newString(char *string) {
 	Expression *expression = malloc(sizeof(Expression));
+	expression->type = SYMBOL_TYPE;
+	expression->op = SYMBOL_OP;
+	expression->value = string;
+
+	return expression;
+}
+
+Expression *newChar(char c) {
 	char *value = malloc(sizeof(char));
 	*value = c;
+	Expression *expression = malloc(sizeof(Expression));
 	expression->type = CHAR_TYPE;
 	expression->op = CONST_OP;
 	expression->value = value;
@@ -96,6 +118,22 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 	return expression;
 }
 
+Expression *newParseExpression(char *machineSymbol, char *string){
+	Variable *var = findVariable(variables, machineSymbol);
+	if(var == NULL)
+		parseError("Machine undefined");
+	if(var->type != MACHINE_TYPE)
+		parseError("Variable type conflict in parse");
+
+	Expression *expression = malloc(sizeof(Expression));
+	expression->type = PARSE_TYPE;
+	expression->op = PARSE_OP;
+	expression->exp1 = newSymbol(machineSymbol);
+	expression->exp2 = newString(string);
+
+	return expression;
+}
+
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative) {
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.conditional = malloc(sizeof(Conditional));
@@ -106,7 +144,23 @@ Statement *newConditional(Expression *condition, Statement *affirmative, Stateme
 	return statement;
 }
 
+void checkAssignmentType(ValueType type, char *symbol, Expression *value) {
+	if (value != NULL && type != value->type) {
+		if (value->type != SYMBOL_TYPE)
+			parseError("Assignment conflict");
+
+		if (type != findVariable(variables, value->value)->type)
+			parseError("Assignment conflict");
+	}
+}
+
 Statement *newAssignment(char *symbol, Expression *value) {
+	Variable *var = findVariable(variables, symbol);
+	if (var == NULL)
+		parseError("Variable undefined");
+
+	checkAssignmentType(var->type, symbol, value);
+
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.assignment = malloc(sizeof(Assignment));
 	statement->data.assignment->symbol = symbol;
@@ -116,16 +170,27 @@ Statement *newAssignment(char *symbol, Expression *value) {
 }
 
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
+	if (findVariable(variables, symbol) != NULL)
+		parseError("Variable already defined");
+
+	checkAssignmentType(type, symbol, value);
+
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.declaration = malloc(sizeof(Declaration));
 	statement->data.declaration->type = type;
 	statement->data.declaration->symbol = symbol;
 	statement->data.declaration->value = value;
 	statement->type = DECLARE_STMT;
+
+	Variable *var = malloc(sizeof(Variable));
+	var->symbol = symbol;
+	var->type = type;
+
+	addToList(variables, var);
 	return statement;
 }
 
-Statement *newLoop(Expression *condition, Statement *block, char *init, char *increment){
+Statement *newLoop(Expression *condition, Statement *block, char *init, char *increment) {
 	Statement *statement = malloc(sizeof(Statement));
 	statement->type = LOOP_STMT;
 	statement->data.loop = malloc(sizeof(Loop));
@@ -142,9 +207,21 @@ Statement *newStatement(StatementType type, Expression *expression) {
 	statement->data.expression = expression;
 	return statement;
 }
+
 Statement *newBlock(LinkedList *statementList) {
 	Statement *statement = malloc(sizeof(Statement));
 	statement->type = BLOCK_STMT;
 	statement->data.statements = statementList;
 	return statement;
+}
+
+Variable *findVariable(LinkedList *list, char *symbol) {
+	Node *aux = list->first;
+	while (aux != NULL) {
+		if (strcmp(((Variable *)aux->value)->symbol, symbol) == 0)
+			return aux->value;
+
+		aux = aux->next;
+	}
+	return NULL;
 }

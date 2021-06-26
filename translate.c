@@ -15,7 +15,7 @@ static void translateConstant(ValueType type, void *value);
 static void translateMachineStates(Node *firstState, char *machineSymbol, LinkedList *finalStatesSymbols);
 static void translateMachineStructs(Node *firstState, char *machineSymbol);
 static void translateMachineParser(char *machineSymbol);
-static void translateMachineExecutionFunction(LinkedList *machineStates, char *machineSymbol);
+static void translateMachineExecutionFunction(LinkedList *machineStates, char *machineSymbol, char *startNodeSymbol);
 static void translateBlock(Statement *block);
 static void translateLoop(Loop *loop);
 
@@ -49,6 +49,19 @@ void translate(LinkedList *ast, LinkedList *machines) {
 	printf("}\n");
 }
 
+static void checkMachineStates(LinkedList *machineStates, MachineType *currentMachine) {
+	if (!machineStatesContains(machineStates, currentMachine->initialState))
+		parseError("Initial node has no transitions");
+
+	Node *state = currentMachine->finalStates->first;
+	while (state != NULL) {
+		if (!machineStatesContains(machineStates, state->value))
+			parseError("Final state has no transitions");
+
+		state = state->next;
+	}
+}
+
 static void translateMachineDefinitions(LinkedList *machines) {
 	Node *currentNode = machines->first;
 	MachineType *currentMachine;
@@ -58,10 +71,11 @@ static void translateMachineDefinitions(LinkedList *machines) {
 		currentMachine = ((MachineType *)((Statement *)currentNode->value)->data.declaration->value->value);
 		machineSymbol = ((Statement *)currentNode->value)->data.declaration->symbol;
 		machineStates = getMachineStates(currentMachine->transitions->first);
+		checkMachineStates(machineStates, currentMachine);
 
 		translateMachineStructs(machineStates->first, machineSymbol);
 		translateMachineStates(machineStates->first, machineSymbol, currentMachine->finalStates);
-		translateMachineExecutionFunction(machineStates, machineSymbol);
+		translateMachineExecutionFunction(machineStates, machineSymbol, currentMachine->initialState);
 
 		currentNode = currentNode->next;
 	}
@@ -105,7 +119,7 @@ static void translateStatement(Statement *statement) {
 	putchar('\n');
 }
 
-static void translateLoop(Loop *loop){
+static void translateLoop(Loop *loop) {
 	printIndentation();
 	printf("for( %s ; ", loop->init);
 	translateExpression(loop->condition);
@@ -180,7 +194,6 @@ static void translateConditional(Conditional *conditional) {
 		printf("else");
 		translateStatement(conditional->negative);
 	}
-
 }
 
 static void translateAssignment(Assignment *assignment) {
@@ -402,15 +415,14 @@ static void translateMachineParser(char *machineSymbol) {
 	printf("}\n\n");
 }
 
-static void translateMachineExecutionFunction(LinkedList *machineStates, char *machineSymbol) {
+static void translateMachineExecutionFunction(LinkedList *machineStates, char *machineSymbol, char *startNodeSymbol) {
 	printIndentation();
 	printf("bool run_machine_%s(char *parse) {\n", machineSymbol);
 
 	indentationLevel++;
 	printIndentation();
 	// FIXME: QUE PASA SI NO HAY NODOS?
-	printf("parser_state_%s current_state = PS_%s_%s;\n", machineSymbol, machineSymbol,
-		   ((MachineState *)machineStates->first->value)->symbol);
+	printf("parser_state_%s current_state = PS_%s_%s;\n", machineSymbol, machineSymbol, startNodeSymbol);
 	printIndentation();
 	printf("char current_char;\n\n");
 
