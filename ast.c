@@ -268,7 +268,9 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 
 	if (peekScope() == variableScopes->first->value && type != MACHINE_TYPE && type != PREDICATE_TYPE) {
 		addToList(globalVaribles, declaration);
-		return newAssignment(symbol, value);
+		if (value != NULL)
+			return newAssignment(symbol, value);
+		return NULL;
 	}
 
 	Statement *statement = malloc(sizeof(Statement));

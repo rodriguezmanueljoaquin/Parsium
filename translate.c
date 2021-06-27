@@ -5,6 +5,7 @@
 #include <string.h>
 #include <translate.h>
 
+static void initGlobalStrings(LinkedList *globalVariables);
 static void printIndentation();
 static void printRead();
 static void translateMachineDefinitions(LinkedList *machines);
@@ -29,6 +30,7 @@ static void translateDefaultPredicates();
 static void translateCall(PredicateCall *call);
 
 static size_t indentationLevel = 0;
+static bool isInitializing = true;
 
 static char *header = "#include <stdio.h>\n"
 					  "#include <stdbool.h>\n"
@@ -55,6 +57,8 @@ void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates, Li
 	Node *currentList = ast->first;
 	printf("int main() {\n");
 	indentationLevel++;
+	initGlobalStrings(globalVariables);
+	isInitializing = false;
 	while (currentList != NULL) {
 		translateStatement((Statement *)currentList->value);
 
@@ -167,7 +171,7 @@ static void translateBlock(Statement *block) {
 
 static void translateDeclaration(Declaration *declaration) {
 	printIndentation();
-	if (declaration->value->op == READ_OP)
+	if (declaration->value != NULL && declaration->value->op == READ_OP)
 		printRead();
 	printIndentation();
 	switch (declaration->type) {
@@ -207,7 +211,7 @@ static void translateDeclaration(Declaration *declaration) {
 	if (declaration->type == CHAR_ARRAY_TYPE)
 		printf("[]");
 
-	if (declaration->type == STRING_TYPE && declaration->value == NULL) {
+	if (!isInitializing && declaration->type == STRING_TYPE && declaration->value == NULL) {
 		printf(" = calloc(1, sizeof(char));\n");
 		return;
 	}
@@ -235,8 +239,8 @@ static void printRead() {
 }
 
 static void translateStringAssignment(char *symbol, Expression *expression) {
-	printIndentation();
 	printf("free(%s);\n", symbol);
+
 	printIndentation();
 	if (expression->op == READ_OP) {
 		printRead();
@@ -729,4 +733,16 @@ static void translateCall(PredicateCall *call) {
 		printf("%s(%s)", call->symbol, call->parameter);
 	else
 		printf("%s('%c')", call->symbol, call->character);
+}
+
+static void initGlobalStrings(LinkedList *globalVariables) {
+	Node *aux = globalVariables->first;
+	while (aux != NULL) {
+		Declaration *dec = (Declaration *)aux->value;
+		if (dec->type == STRING_TYPE) {
+			printIndentation();
+			printf("%s = calloc(1, sizeof(char));\n", dec->symbol);
+		}
+		aux = aux->next;
+	}
 }
