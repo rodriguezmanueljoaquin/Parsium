@@ -405,7 +405,7 @@ Expression *newPredicateCall(char *symbol, char *parameter, char character) {
 	call->character = character;
 
 	Expression *expression = malloc(sizeof(Expression));
-	expression->type = SYMBOL_TYPE;
+	expression->type = BOOL_TYPE;
 	expression->op = EXEC_OP;
 	expression->value = call;
 
