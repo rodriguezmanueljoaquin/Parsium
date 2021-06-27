@@ -11,6 +11,7 @@ LinkedList *predicates;
 void parseError(char *message);
 static void checkTypeWithExit(ValueType type, Expression *value);
 static bool checkType(ValueType type, Expression *value);
+static bool checkDefaultPredicates(char *symbol);
 
 void parseError(char *message) {
 	fprintf(stderr, "Syntax error: %s\n", message);
@@ -106,7 +107,7 @@ TransitionCondition *newTransitionCondition(char *predicate, char character) {
 }
 
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates) {
-	if(peekScope() != variableScopes->first->value)
+	if (peekScope() != variableScopes->first->value)
 		parseError("Machines can only be global");
 
 	Expression *expression = malloc(sizeof(Expression));
@@ -266,7 +267,7 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 		addToList(globalVaribles, declaration);
 		return newAssignment(symbol, value);
 	}
-	
+
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.declaration = declaration;
 	statement->data.declaration->value = value;
@@ -317,10 +318,17 @@ Statement *newBlock(LinkedList *statementList) {
 	return statement;
 }
 
+static bool checkDefaultPredicates(char *symbol) {
+	if (strcmp(symbol, DEFAULT_PREDICATE_ISLOWERCASE) == 0 || strcmp(symbol, DEFAULT_PREDICATE_ISUPPERCASE) == 0 ||
+		strcmp(symbol, DEFAULT_PREDICATE_ISNUMBER) == 0)
+		return true;
+	return false;
+}
+
 void newPredicate(char *symbol, char *parameter, Statement *block) {
-	if (findPredicate(symbol) != NULL)
+	if (findPredicate(symbol) != NULL || checkDefaultPredicates(symbol))
 		parseError("Predicate already defined");
-	if(peekScope() != variableScopes->first->value)
+	if (peekScope() != variableScopes->first->value)
 		parseError("Predicates can only be global");
 
 	Predicate *predicate = malloc(sizeof(Predicate));
@@ -368,6 +376,13 @@ Variable *findVariableInScope(LinkedList *list, char *symbol) {
 }
 
 Predicate *findPredicate(char *symbol) {
+	if (checkDefaultPredicates(symbol)) {
+		Predicate *predicate = malloc(sizeof(Predicate));
+		predicate->symbol = symbol;
+		predicate->block = NULL;
+		predicate->parameter = NULL;
+		return predicate;
+	}
 	Node *aux = predicates->first;
 	while (aux != NULL) {
 		if (strcmp(((Predicate *)aux->value)->symbol, symbol) == 0)

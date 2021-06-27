@@ -22,6 +22,7 @@ static void translateLoop(Loop *loop);
 static void translatePredicates(LinkedList *predicates);
 static void translatePrintType(Expression *expression);
 static void translateGlobalVariables(LinkedList *variables);
+static void translateDefaultPredicates();
 
 static size_t indentationLevel = 0;
 
@@ -35,7 +36,7 @@ void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates, Li
 	printf("%s", header);
 
 	translateGlobalVariables(globalVariables);
-
+	translateDefaultPredicates();
 	translatePredicates(predicates);
 	translateMachineDefinitions(machines);
 
@@ -370,13 +371,13 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 			auxTransition = auxTransitionNode->value;
 			when = NULL_STR;
 			strcpy(character, NO_CHAR);
-			if (auxTransition->condition->character != 0) 
+			if (auxTransition->condition->character != 0)
 				sprintf(character, "'%c'", auxTransition->condition->character);
 			else if (auxTransition->condition->predicate != NULL)
 				when = auxTransition->condition->predicate->symbol;
 			else
 				when = "ANY";
-			
+
 			printIndentation();
 			printf("{.when = %s, .destination = PS_%s_%s, .character = %s},\n", when, machineSymbol, auxTransition->toState,
 				   character);
@@ -389,13 +390,6 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 		printIndentation();
 		printf("};\n\n");
 	}
-	// Estructura de nodo ERROR
-	printIndentation();
-	printf("static const parser_state_transition_%s ST_%s_ERROR[1] = {\n", machineSymbol, machineSymbol);
-	printIndentation();
-	printf("\t{.when = ANY, .destination = PS_%s_ERROR, .character = NO_CHAR},\n", machineSymbol);
-	printIndentation();
-	printf("};\n\n");
 
 	// ESTRUCTURA CON TODOS LOS NODOS
 	printIndentation();
@@ -406,7 +400,7 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 		printf("ST_%s_%s, ", machineSymbol, ((MachineState *)auxNode->value)->symbol);
 	}
 	printIndentation();
-	printf("ST_%s_ERROR};\n\n", machineSymbol);
+	printf("};\n\n");
 
 	// ESTRUCTURA CON LA CANTIDAD DE TRANSICIONES POR NODO
 	printIndentation();
@@ -417,7 +411,7 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 		printf("N(ST_%s_%s), ", machineSymbol, ((MachineState *)auxNode->value)->symbol);
 	}
 	printIndentation();
-	printf("N(ST_%s_ERROR)};\n\n", machineSymbol);
+	printf("};\n\n");
 
 	printIndentation();
 	printf("static const parser_state_%s final_states_%s[] = {", machineSymbol, machineSymbol);
@@ -447,8 +441,6 @@ static void translateMachineStructs(Node *firstState, char *machineSymbol) {
 		printIndentation();
 		printf("PS_%s_%s,\n", machineSymbol, ((MachineState *)auxStateNode->value)->symbol);
 	}
-	printIndentation();
-	printf("PS_%s_ERROR,\n", machineSymbol);
 	indentationLevel--;
 
 	printIndentation();
@@ -623,4 +615,24 @@ static void translatePrintType(Expression *expression) {
 		default:
 			break;
 	}
+}
+
+static void translateDefaultPredicates() {
+	printf("bool %s(char x) {\n"
+		   "\tif ('A' <= x && x <= 'Z')\n"
+		   "\t\treturn true;\n"
+		   "\treturn false;\n"
+		   "}\n\n", DEFAULT_PREDICATE_ISUPPERCASE);
+
+	printf("bool %s(char x) {\n"
+		   "\tif ('a' <= x && x <= 'z')\n"
+		   "\t\treturn true;\n"
+		   "\treturn false;\n"
+		   "}\n\n", DEFAULT_PREDICATE_ISLOWERCASE);
+
+	printf("bool %s(char x) {\n"
+		   "\tif ('0' <= x && x <= '9')\n"
+		   "\t\treturn true;\n"
+		   "\treturn false;\n"
+		   "}\n\n", DEFAULT_PREDICATE_ISNUMBER);
 }

@@ -7,6 +7,10 @@
 
 #define NULL_STR "NULL"
 
+#define DEFAULT_PREDICATE_ISUPPERCASE "isUpperCase"
+#define DEFAULT_PREDICATE_ISLOWERCASE "isLowerCase"
+#define DEFAULT_PREDICATE_ISNUMBER "isNumber"
+
 typedef enum {
 	AND_OP,
 	OR_OP,
