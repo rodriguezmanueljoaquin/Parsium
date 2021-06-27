@@ -26,6 +26,7 @@ static void addTransitionToMachineState(LinkedList *machineStates, char *fromSta
 
 LinkedList *getMachineStates(Node *firstTransition) {
 	LinkedList *currentStates = newList();
+	addToList(currentStates, newMachineState("ERROR"));
 	Node *auxNode = firstTransition;
 	for (size_t i = 0; auxNode != NULL; auxNode = auxNode->next, i++) {
 		Transition *currentTransition = auxNode->value;

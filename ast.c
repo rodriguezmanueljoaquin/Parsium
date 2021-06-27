@@ -4,12 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+LinkedList *globalVaribles;
 LinkedList *variableScopes;
 LinkedList *predicates;
 
 void parseError(char *message);
 static void checkTypeWithExit(ValueType type, Expression *value);
 static bool checkType(ValueType type, Expression *value);
+static bool checkDefaultPredicates(char *symbol);
 
 void parseError(char *message) {
 	fprintf(stderr, "Syntax error: %s\n", message);
@@ -105,6 +107,9 @@ TransitionCondition *newTransitionCondition(char *predicate, char character) {
 }
 
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates) {
+	if (peekScope() != variableScopes->first->value)
+		parseError("Machines can only be global");
+
 	Expression *expression = malloc(sizeof(Expression));
 	expression->type = MACHINE_TYPE;
 	expression->op = CONST_OP;
@@ -249,21 +254,28 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 		parseError("Variable already defined");
 
 	checkTypeWithExit(type, value);
-	//	if (type != value->type)
-	//		parseError("Left value type does not match right value type");
-
-	Statement *statement = malloc(sizeof(Statement));
-	statement->data.declaration = malloc(sizeof(Declaration));
-	statement->data.declaration->type = type;
-	statement->data.declaration->symbol = symbol;
-	statement->data.declaration->value = value;
-	statement->type = DECLARE_STMT;
 
 	Variable *var = malloc(sizeof(Variable));
 	var->symbol = symbol;
 	var->type = type;
 
 	addToList(peekScope(), var);
+
+	Declaration *declaration = malloc(sizeof(Declaration));
+	declaration->type = type;
+	declaration->symbol = symbol;
+	declaration->value = NULL;
+
+	if (peekScope() == variableScopes->first->value && type != MACHINE_TYPE && type != PREDICATE_TYPE) {
+		addToList(globalVaribles, declaration);
+		return newAssignment(symbol, value);
+	}
+
+	Statement *statement = malloc(sizeof(Statement));
+	statement->data.declaration = declaration;
+	statement->data.declaration->value = value;
+	statement->type = DECLARE_STMT;
+
 	return statement;
 }
 
@@ -292,9 +304,18 @@ Statement *newBlock(LinkedList *statementList) {
 	return statement;
 }
 
+static bool checkDefaultPredicates(char *symbol) {
+	if (strcmp(symbol, DEFAULT_PREDICATE_ISLOWERCASE) == 0 || strcmp(symbol, DEFAULT_PREDICATE_ISUPPERCASE) == 0 ||
+		strcmp(symbol, DEFAULT_PREDICATE_ISNUMBER) == 0)
+		return true;
+	return false;
+}
+
 void newPredicate(char *symbol, char *parameter, Statement *block) {
-	if (findPredicate(symbol) != NULL)
+	if (findPredicate(symbol) != NULL || checkDefaultPredicates(symbol))
 		parseError("Predicate already defined");
+	if (peekScope() != variableScopes->first->value)
+		parseError("Predicates can only be global");
 
 	Predicate *predicate = malloc(sizeof(Predicate));
 	predicate->symbol = symbol;
@@ -341,6 +362,13 @@ Variable *findVariableInScope(LinkedList *list, char *symbol) {
 }
 
 Predicate *findPredicate(char *symbol) {
+	if (checkDefaultPredicates(symbol)) {
+		Predicate *predicate = malloc(sizeof(Predicate));
+		predicate->symbol = symbol;
+		predicate->block = NULL;
+		predicate->parameter = NULL;
+		return predicate;
+	}
 	Node *aux = predicates->first;
 	while (aux != NULL) {
 		if (strcmp(((Predicate *)aux->value)->symbol, symbol) == 0)
@@ -349,4 +377,23 @@ Predicate *findPredicate(char *symbol) {
 		aux = aux->next;
 	}
 	return NULL;
+}
+
+Expression *newPredicateCall(char *symbol, char *parameter, char character) {	
+	if (findPredicate(symbol) == NULL)
+		parseError("Predicate not defined");
+	if (parameter != NULL && findVariable(parameter) == NULL)
+		parseError("Variable not defined");
+
+	PredicateCall *call = malloc(sizeof(PredicateCall));
+	call->symbol = symbol;
+	call->parameter = parameter;
+	call->character = character;
+
+	Expression *expression = malloc(sizeof(Expression));
+	expression->type = BOOL_TYPE;
+	expression->op = EXEC_OP;
+	expression->value = call;
+
+	return expression;
 }

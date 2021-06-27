@@ -7,6 +7,10 @@
 
 #define NULL_STR "NULL"
 
+#define DEFAULT_PREDICATE_ISUPPERCASE "isUpperCase"
+#define DEFAULT_PREDICATE_ISLOWERCASE "isLowerCase"
+#define DEFAULT_PREDICATE_ISNUMBER "isNumber"
+
 typedef enum {
 	AND_OP,
 	OR_OP,
@@ -107,6 +111,12 @@ typedef struct Predicate {
 	Statement *block;
 } Predicate;
 
+typedef struct PredicateCall {
+	char *symbol;
+	char *parameter;
+	char character;
+} PredicateCall;
+
 typedef struct TransitionCondition {
 	Predicate *predicate;
 	char character;
@@ -147,6 +157,7 @@ Expression *newArray(LinkedList *list, ValueType type);
 Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2);
 Expression *newParseExpression(char *machineSymbol, char *string);
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates);
+Expression *newPredicateCall(char *symbol, char *parameter, char character);
 Transition *newTransition(char *fromState, char *toState, TransitionCondition *when);
 TransitionCondition *newTransitionCondition(char *predicate, char character);
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative);

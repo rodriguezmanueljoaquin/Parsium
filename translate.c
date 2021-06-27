@@ -24,6 +24,9 @@ static void translateBlock(Statement *block);
 static void translateLoop(Loop *loop);
 static void translatePredicates(LinkedList *predicates);
 static void translatePrintType(Expression *expression);
+static void translateGlobalVariables(LinkedList *variables);
+static void translateDefaultPredicates();
+static void translateCall(PredicateCall *call);
 
 static size_t indentationLevel = 0;
 
@@ -41,10 +44,12 @@ static char *header = "#include <stdio.h>\n"
 					  "static int read_tmp_01 = 0;\n"
 					  "static int read_tmp_02 = 0;\n";
 
-void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates) {
+void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates, LinkedList *globalVariables) {
 	printf("%s", header);
 
-	translatePredicates(predicates); // poner prototipos y luego definirlas
+	translateGlobalVariables(globalVariables);
+	translateDefaultPredicates();
+	translatePredicates(predicates);
 	translateMachineDefinitions(machines);
 
 	Node *currentList = ast->first;
@@ -58,6 +63,15 @@ void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates) {
 	indentationLevel--;
 	printIndentation();
 	printf("}\n");
+}
+
+static void translateGlobalVariables(LinkedList *variables) {
+	Node *aux = variables->first;
+	while (aux != NULL) {
+		translateDeclaration(aux->value);
+		aux = aux->next;
+	}
+	putchar('\n');
 }
 
 static void checkMachineStates(LinkedList *machineStates, MachineType *currentMachine) {
@@ -355,7 +369,7 @@ static void translateExpression(Expression *expression) {
 			printf("run_machine_%s(\"%s\")", (char *)expression->exp1->value, (char *)expression->exp2->value);
 			break;
 		case EXEC_OP:
-			// TODO
+			translateCall(expression->value);
 			break;
 		case SYMBOL_OP:
 			printf("%s", (char *)expression->value);
@@ -442,13 +456,6 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 		printIndentation();
 		printf("};\n\n");
 	}
-	// Estructura de nodo ERROR
-	printIndentation();
-	printf("static const parser_state_transition_%s ST_%s_ERROR[1] = {\n", machineSymbol, machineSymbol);
-	printIndentation();
-	printf("\t{.when = ANY, .destination = PS_%s_ERROR, .character = NO_CHAR},\n", machineSymbol);
-	printIndentation();
-	printf("};\n\n");
 
 	// ESTRUCTURA CON TODOS LOS NODOS
 	printIndentation();
@@ -459,7 +466,7 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 		printf("ST_%s_%s, ", machineSymbol, ((MachineState *)auxNode->value)->symbol);
 	}
 	printIndentation();
-	printf("ST_%s_ERROR};\n\n", machineSymbol);
+	printf("};\n\n");
 
 	// ESTRUCTURA CON LA CANTIDAD DE TRANSICIONES POR NODO
 	printIndentation();
@@ -470,7 +477,7 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 		printf("N(ST_%s_%s), ", machineSymbol, ((MachineState *)auxNode->value)->symbol);
 	}
 	printIndentation();
-	printf("N(ST_%s_ERROR)};\n\n", machineSymbol);
+	printf("};\n\n");
 
 	printIndentation();
 	printf("static const parser_state_%s final_states_%s[] = {", machineSymbol, machineSymbol);
@@ -500,8 +507,6 @@ static void translateMachineStructs(Node *firstState, char *machineSymbol) {
 		printIndentation();
 		printf("PS_%s_%s,\n", machineSymbol, ((MachineState *)auxStateNode->value)->symbol);
 	}
-	printIndentation();
-	printf("PS_%s_ERROR,\n", machineSymbol);
 	indentationLevel--;
 
 	printIndentation();
@@ -676,4 +681,31 @@ static void translatePrintType(Expression *expression) {
 		default:
 			break;
 	}
+}
+
+static void translateDefaultPredicates() {
+	printf("bool %s(char x) {\n"
+		   "\tif ('A' <= x && x <= 'Z')\n"
+		   "\t\treturn true;\n"
+		   "\treturn false;\n"
+		   "}\n\n", DEFAULT_PREDICATE_ISUPPERCASE);
+
+	printf("bool %s(char x) {\n"
+		   "\tif ('a' <= x && x <= 'z')\n"
+		   "\t\treturn true;\n"
+		   "\treturn false;\n"
+		   "}\n\n", DEFAULT_PREDICATE_ISLOWERCASE);
+
+	printf("bool %s(char x) {\n"
+		   "\tif ('0' <= x && x <= '9')\n"
+		   "\t\treturn true;\n"
+		   "\treturn false;\n"
+		   "}\n\n", DEFAULT_PREDICATE_ISNUMBER);
+}
+
+static void translateCall(PredicateCall *call) {
+	if(call->parameter != NULL)
+		printf("%s(%s)", call->symbol, call->parameter);
+	else
+		printf("%s('%c')", call->symbol, call->character);
 }

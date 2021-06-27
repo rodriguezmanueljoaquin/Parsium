@@ -11,6 +11,7 @@
 
 	extern LinkedList *predicates;
 	extern LinkedList *variableScopes;
+    extern LinkedList *globalVaribles;
 
     int yylex_destroy();
     int yylex();
@@ -42,7 +43,7 @@
 %parse-param { LinkedList **args }
 
 %type <valuetype> type
-%type <expression> term expression binary_operation unary_operation array machine 
+%type <expression> term expression binary_operation unary_operation array machine predicate
 %type <statement> definition declaration basic_statement statement assignment block
 %type <linkedlist> S statement_list char_array_elem char_array transition_array_elem transition_array final_state_array_elem final_state_array
 %type <transition> transition
@@ -130,9 +131,14 @@ assignment  :   IDENT ASSIGN expression                 {$$ = newAssignment($1, 
 
 expression  :   binary_operation						{$$ = $1;}
             |   unary_operation                         {$$ = $1;}
+            |   predicate                               {$$ = $1;}
 			|	array						            {$$ = $1;}
             |   machine                                 {$$ = $1;}
             |   PARSE STRING WITH IDENT                 {$$ = newParseExpression($4, $2);}
+            ;
+
+predicate   :   IDENT '(' IDENT ')'                     {$$ = newPredicateCall($1, $3, 0);}
+            |   IDENT '(' CHAR ')'                      {$$ = newPredicateCall($1, NULL, $3);}
             ;
 
 binary_operation    :   expression OR expression        {$$ = newExpression(OR_OP, $1, $3);}
@@ -212,10 +218,11 @@ final_state_array_elem   :   IDENT                            {$$ = newList(); a
 int main(int argc, char *argv[]) {
 	predicates = newList();
     variableScopes = newList();
+    globalVaribles = newList();
     pushScope();
     LinkedList *args[LIST_COUNT] = {0};
     yyparse(args);
     yylex_destroy();
-    translate(args[TREE_LIST], args[MACHINE_LIST], predicates);
+    translate(args[TREE_LIST], args[MACHINE_LIST], predicates, globalVaribles);
     return 0;
 }
