@@ -441,9 +441,22 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 			auxTransition = auxTransitionNode->value;
 			when = NULL_STR;
 			strcpy(character, NO_CHAR);
-			if (auxTransition->condition->character != 0)
-				sprintf(character, "'%c'", auxTransition->condition->character);
-			else if (auxTransition->condition->predicate != NULL)
+			if (auxTransition->condition->character != 0) {
+				switch (auxTransition->condition->character) {
+					case '\n':
+						sprintf(character, "'\\n'");
+						break;
+					case '\r':
+						sprintf(character, "'\\r'");
+						break;
+					case '\t':
+						sprintf(character, "'\\t'");
+						break;
+					default:
+						sprintf(character, "'%c'", auxTransition->condition->character);
+						break;
+				}
+			} else if (auxTransition->condition->predicate != NULL)
 				when = auxTransition->condition->predicate->symbol;
 			else
 				when = "ANY";
@@ -545,26 +558,21 @@ static void translateMachineParser(char *machineSymbol) {
 
 	indentationLevel++;
 	printIndentation();
-	printf("if((states_%s[current_state][j].character != 0 && current_char == states_%s[current_state][j].character) ||\n",
-		   machineSymbol, machineSymbol);
+	printf("if (states_%s[current_state][j].character != 0) {\n", machineSymbol);
+
 	indentationLevel++;
-	printIndentation();
-	printf("states_%s[current_state][j].when == ANY ||\n", machineSymbol);
-	printIndentation();
-	printf("states_%s[current_state][j].when(current_char)) {\n", machineSymbol);
-
-	printIndentation();
-	printf("current_state = states_%s[current_state][j].destination;\n", machineSymbol);
-	printIndentation();
-	printf("break;\n");
+		printIndentation();
+		printf("if (current_char != states_%s[current_state][j].character) break;\n", machineSymbol);
 	indentationLevel--;
 
 	printIndentation();
-	printf("}\n");
+	printf( "} else if (states_%s[current_state][j].when != ANY & !states_%s[current_state][j].when(current_char)) break;\n", machineSymbol, machineSymbol);
+	printIndentation();
+	printf( "current_state = states_%s[current_state][j].destination;\n", machineSymbol);
 	indentationLevel--;
 
 	printIndentation();
-	printf("}\n");
+	printf("}\n\n");
 	indentationLevel--;
 
 	printIndentation();
@@ -692,19 +700,22 @@ static void translateDefaultPredicates() {
 		   "\tif ('A' <= x && x <= 'Z')\n"
 		   "\t\treturn true;\n"
 		   "\treturn false;\n"
-		   "}\n\n", DEFAULT_PREDICATE_ISUPPERCASE);
+		   "}\n\n",
+		   DEFAULT_PREDICATE_ISUPPERCASE);
 
 	printf("bool %s(char x) {\n"
 		   "\tif ('a' <= x && x <= 'z')\n"
 		   "\t\treturn true;\n"
 		   "\treturn false;\n"
-		   "}\n\n", DEFAULT_PREDICATE_ISLOWERCASE);
+		   "}\n\n",
+		   DEFAULT_PREDICATE_ISLOWERCASE);
 
 	printf("bool %s(char x) {\n"
 		   "\tif ('0' <= x && x <= '9')\n"
 		   "\t\treturn true;\n"
 		   "\treturn false;\n"
-		   "}\n\n", DEFAULT_PREDICATE_ISNUMBER);
+		   "}\n\n",
+		   DEFAULT_PREDICATE_ISNUMBER);
 }
 
 static void translateCall(PredicateCall *call) {
