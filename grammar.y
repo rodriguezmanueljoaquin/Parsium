@@ -34,7 +34,8 @@
     Assignment *assignment;
     Statement *statement;
     LinkedList *linkedlist;
-    TransitionType *transitiontype;
+    Transition *transition;
+    TransitionCondition *transitionCondition;
 }
 
 //  FIXME: cambiar esto por variables globales?
@@ -44,7 +45,8 @@
 %type <expression> term expression binary_operation unary_operation array machine 
 %type <statement> definition declaration operation statement assignment block
 %type <linkedlist> S statement_list char_array_elem char_array transition_array_elem transition_array final_state_array_elem final_state_array
-%type <transitiontype> transition
+%type <transition> transition
+%type <transitionCondition> transition_when
 
 %token <string> IDENT STRING
 %token <integer> INTEGER
@@ -187,8 +189,12 @@ transition_array_elem   :   transition                  {$$ = newList(); addToLi
             |   transition_array_elem ',' transition    {addToList($$,$3);}
             ;
 
-transition  :   IDENT ARROW IDENT WHEN IDENT            {$$ = newTransition($1, $3, $5);}
+transition  :   IDENT ARROW IDENT WHEN transition_when      {$$ = newTransition($1, $3, $5);}
             ;
+
+transition_when :   IDENT                                   {$$ = newTransitionCondition($1, 0);}
+                |   CHAR                                    {$$ = newTransitionCondition(NULL, $1);}
+                ;
 
 final_state_array :   '[' final_state_array_elem ']'                {$$ = $2;}
             ;

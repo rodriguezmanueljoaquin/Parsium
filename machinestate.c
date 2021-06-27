@@ -12,7 +12,7 @@ static MachineState *newMachineState(char *symbol) {
 	return newState;
 }
 
-static void addTransitionToMachineState(LinkedList *machineStates, char *fromState, TransitionType *transition) {
+static void addTransitionToMachineState(LinkedList *machineStates, char *fromState, Transition *transition) {
 	Node *aux = machineStates->first;
 	while (aux != NULL) {
 		if (strcmp(((MachineState *)aux->value)->symbol, fromState) == 0) {
@@ -28,7 +28,7 @@ LinkedList *getMachineStates(Node *firstTransition) {
 	LinkedList *currentStates = newList();
 	Node *auxNode = firstTransition;
 	for (size_t i = 0; auxNode != NULL; auxNode = auxNode->next, i++) {
-		TransitionType *currentTransition = (TransitionType *)auxNode->value;
+		Transition *currentTransition = auxNode->value;
 		if (!machineStatesContains(currentStates, currentTransition->fromState)) {
 			addToList(currentStates, newMachineState(currentTransition->fromState));
 			addTransitionToMachineState(currentStates, currentTransition->fromState, currentTransition);

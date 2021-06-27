@@ -4,6 +4,9 @@
 
 #include <linkedlist.h>
 #include <stdbool.h>
+
+#define DEFAULT_PREDICATE "cmp_char"
+
 typedef enum {
 	AND_OP,
 	OR_OP,
@@ -98,11 +101,16 @@ typedef struct Predicate {
 	Statement *block;
 } Predicate;
 
-typedef struct TransitionType {
+typedef struct TransitionCondition {
+	Predicate *predicate;
+	char character;
+} TransitionCondition;
+
+typedef struct Transition {
 	char *fromState;
 	char *toState;
-	Predicate *when;
-} TransitionType;
+	TransitionCondition *condition;
+} Transition;
 
 /* Statement nodes para AST */
 struct Statement {
@@ -133,7 +141,8 @@ Expression *newArray(LinkedList *list, ValueType type);
 Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2);
 Expression *newParseExpression(char *machineSymbol, char *string);
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates);
-TransitionType *newTransition(char *fromState, char *toState, char *when);
+Transition *newTransition(char *fromState, char *toState, TransitionCondition *when);
+TransitionCondition *newTransitionCondition(char *predicate, char character);
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative);
 Statement *newAssignment(char *symbol, Expression *value);
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value);

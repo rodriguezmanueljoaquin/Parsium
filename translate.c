@@ -26,7 +26,8 @@ static size_t indentationLevel = 0;
 static char *header = "#include <stdio.h>\n"
 					  "#include <stdbool.h>\n"
 					  "#define N(x) (sizeof(x) / sizeof((x)[0]))\n"
-					  "#define ANY NULL\n\n";
+					  "#define ANY NULL\n"
+					  "#define "NO_CHAR" 0\n\n";
 
 void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates) {
 	printf("%s", header);
@@ -342,13 +343,22 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 			   auxStateValue->transitionSize);
 		indentationLevel++;
 		Node *auxTransitionNode = auxStateValue->transitions->first;
+		Transition *auxTransition;
+		char *when, *character = malloc(strlen(NO_CHAR));
 		for (size_t j = 0; auxTransitionNode != NULL; auxTransitionNode = auxTransitionNode->next, j++) {
+			auxTransition = auxTransitionNode->value;
+			when = DEFAULT_PREDICATE;
+			strcpy(character, NO_CHAR);
+			if (auxTransition->condition->predicate != NULL)
+				when = auxTransition->condition->predicate->symbol;
+			if (auxTransition->condition->character != 0) {
+				sprintf(character, "'%c'", auxTransition->condition->character);
+			}
 			printIndentation();
-			printf("{.when = %s, .destination = PS_%s_%s},\n", (char *)((TransitionType *)auxTransitionNode->value)->when->symbol,
-				   machineSymbol, ((TransitionType *)auxTransitionNode->value)->toState);
+			printf("{.when = %s, .destination = PS_%s_%s, .character = %s},\n", when, machineSymbol, auxTransition->toState, character);
 		}
 		printIndentation();
-		printf("{.when = ANY, .destination = PS_%s_ERROR},\n", machineSymbol);
+		printf("{.when = ANY, .destination = PS_%s_ERROR, .character = NO_CHAR},\n", machineSymbol);
 
 		indentationLevel--;
 
@@ -359,7 +369,7 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 	printIndentation();
 	printf("static const parser_state_transition_%s ST_%s_ERROR[1] = {\n", machineSymbol, machineSymbol);
 	printIndentation();
-	printf("\t{.when = ANY, .destination = PS_%s_ERROR},\n", machineSymbol);
+	printf("\t{.when = ANY, .destination = PS_%s_ERROR, .character = NO_CHAR},\n", machineSymbol);
 	printIndentation();
 	printf("};\n\n");
 
@@ -428,6 +438,8 @@ static void translateMachineStructs(Node *firstState, char *machineSymbol) {
 	printIndentation();
 	printf("bool (*when)(char);\n");
 	printIndentation();
+	printf("char character;\n");
+	printIndentation();
 	printf("parser_state_%s destination;\n", machineSymbol);
 	indentationLevel--;
 
@@ -447,10 +459,14 @@ static void translateMachineParser(char *machineSymbol) {
 
 	indentationLevel++;
 	printIndentation();
-	printf("if (states_%s[current_state][j].when == ANY || states_%s[current_state][j].when(current_char)) {\n", machineSymbol,
-		   machineSymbol);
-
+	printf("if (states_%s[current_state][j].when == ANY ||\n", machineSymbol);
 	indentationLevel++;
+	printIndentation();
+	printf("(states_%s[current_state][j].character != 0 && current_char == states_%s[current_state][j].character) ||\n", 
+				machineSymbol, machineSymbol);
+	printIndentation();
+	printf("states_%s[current_state][j].when(current_char)) {\n", machineSymbol);
+
 	printIndentation();
 	printf("current_state = states_%s[current_state][j].destination;\n", machineSymbol);
 	printIndentation();
@@ -538,6 +554,8 @@ static void translatePredicates(LinkedList *predicates) {
 		node = node->next;
 	}
 	putchar('\n');
+
+	printf("bool "DEFAULT_PREDICATE"(char c){return false;}\n");
 
 	node = predicates->first;
 	while (node != NULL) {

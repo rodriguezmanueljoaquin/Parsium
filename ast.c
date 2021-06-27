@@ -78,17 +78,30 @@ Expression *newArray(LinkedList *list, ValueType type) {
 	return expression;
 }
 
-TransitionType *newTransition(char *fromState, char *toState, char *when) {
-	Predicate *predicate = findPredicate(when);
-	if (predicate == NULL)
-		parseError("Predicate undefined");
+Transition *newTransition(char *fromState, char *toState, TransitionCondition *when) {
+	Transition *transition = malloc(sizeof(Transition));
 
-	TransitionType *transition = malloc(sizeof(TransitionType));
 	transition->fromState = fromState;
 	transition->toState = toState;
-	transition->when = predicate;
+	transition->condition = when;
 
 	return transition;
+}
+
+TransitionCondition *newTransitionCondition(char *predicate, char character) {
+	TransitionCondition *condition = malloc(sizeof(TransitionCondition));
+	Predicate *aux = NULL;
+
+	if(predicate != NULL) {
+		aux = findPredicate(predicate);
+		if (aux == NULL)
+			parseError("Predicate undefined");
+	}
+
+	condition->predicate = aux;
+	condition->character = character;
+
+	return condition;
 }
 
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates) {
@@ -271,6 +284,8 @@ Statement *newBlock(LinkedList *statementList) {
 void newPredicate(char *symbol, char *parameter, Statement *block) {
 	if (findPredicate(symbol) != NULL)
 		parseError("Predicate already defined");
+	if (strcmp(DEFAULT_PREDICATE, symbol) == 0)
+		parseError("Predicate can't have name "DEFAULT_PREDICATE);
 
 	Predicate *predicate = malloc(sizeof(Predicate));
 	predicate->symbol = symbol;
