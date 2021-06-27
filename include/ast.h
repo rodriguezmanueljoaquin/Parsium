@@ -26,7 +26,8 @@ typedef enum {
 	GT_OP,
 	LT_OP,
 	GE_OP,
-	LE_OP
+	LE_OP,
+	PRINT_OP,
 } OperationType;
 
 typedef enum {
@@ -36,7 +37,6 @@ typedef enum {
 	DECLARE_STMT,
 	BREAK_STMT,
 	RETURN_STMT,
-	PRINT_STMT,
 	READ_STRING_STMT,
 	READ_INT_STMT,
 	READ_CHAR_STMT,
@@ -144,6 +144,7 @@ Expression *newBool(bool b);
 Expression *newInteger(long number);
 Expression *newArray(LinkedList *list, ValueType type);
 Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2);
+Expression *newPrint(Expression *expression);
 Expression *newParseExpression(char *machineSymbol, char *string);
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates);
 Transition *newTransition(char *fromState, char *toState, TransitionCondition *when);
@@ -153,7 +154,6 @@ Statement *newAssignment(char *symbol, Expression *value);
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value);
 Statement *newLoop(Expression *condition, Statement *block, char *init, char *increment);
 Statement *newStatement(StatementType type, Expression *expression);
-Statement *newPrint(Expression *expression);
 // Statement *newRead(Expression *expression);
 Statement *newBlock(LinkedList *statementList);
 void newPredicate(char *symbol, char *parameter, Statement *block);

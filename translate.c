@@ -109,12 +109,6 @@ static void translateStatement(Statement *statement) {
 			translateExpression(statement->data.expression);
 			putchar(';');
 			break;
-		case PRINT_STMT:
-			printIndentation();
-			printf("printf(");
-			translatePrintType(statement->data.expression);
-			printf(");");
-			break;
 		case BLOCK_STMT:
 			translateBlock(statement);
 			break;
@@ -304,6 +298,12 @@ static void translateExpression(Expression *expression) {
 			break;
 		case CONST_OP:
 			translateConstant(expression->type, expression->value);
+			break;
+		case PRINT_OP:
+			printIndentation();
+			printf("printf(");
+			translatePrintType(expression->exp1);
+			printf(");");
 			break;
 		default:
 			break;

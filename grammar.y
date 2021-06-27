@@ -100,12 +100,11 @@ statement   :   basic_statement ';'                     {$$ = $1;}
 if_declaration  : IF                                    {pushScope();} 
                 ;
 
-block       :   '{'  statement_list '}'	                {$$ = newBlock($2); popScope();}
+block       :   '{' statement_list '}'	                {$$ = newBlock($2); popScope();}
             ;
 
-basic_statement     :   PRINT '(' expression ')'                {$$ = newPrint($3);}
-                    /* |   read                                    {$$ = $1;} */
-                    |   declaration                             {$$ = $1;}
+basic_statement     
+                    :   declaration                             {$$ = $1;}
                     |   definition                              {$$ = $1;}
                     //TODO: Validar que retorne algo booleano
                     |   RETURN expression                       {$$ = newStatement(RETURN_STMT, $2);}
@@ -162,6 +161,7 @@ unary_operation     :   '(' expression ')'                  {$$ = newExpression(
                     |   NOT expression                      {$$ = newExpression(NOT_OP, $2, NULL);}
                     |   MINUS expression                    {$$ = newExpression(MINUS_OP, NULL, $2);}
                     |   PLUS expression                     {$$ = newExpression(PLUS_OP, NULL, $2);}
+                    |   PRINT '(' expression ')'            {$$ = newPrint($3);}
                     |   term                                {$$ = $1;}
 
 term        :   BOOL                                    {$$ = newBool($1);}

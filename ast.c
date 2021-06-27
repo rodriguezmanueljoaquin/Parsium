@@ -164,6 +164,12 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 		case EXEC_OP:
 		case SYMBOL_OP:
 			return NULL;
+		case PRINT_OP:
+			if (!checkType(BOOL_TYPE, exp1) && !checkType(CHAR_TYPE, exp1) && !checkType(STRING_TYPE, exp1) &&
+				!checkType(INTEGER_TYPE, exp1))
+				parseError("print() may only receive boolean, character, string, or integer type");
+			expType = INTEGER_TYPE;
+			break;
 		default:
 			expType = exp1->type;
 			break;
@@ -240,8 +246,8 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 		parseError("Variable already defined");
 
 	checkTypeWithExit(type, value);
-//	if (type != value->type)
-//		parseError("Left value type does not match right value type");
+	//	if (type != value->type)
+	//		parseError("Left value type does not match right value type");
 
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.declaration = malloc(sizeof(Declaration));
@@ -276,23 +282,22 @@ Statement *newStatement(StatementType type, Expression *expression) {
 	return statement;
 }
 
-Statement *newPrint(Expression *expression) {
-	if (!checkType(BOOL_TYPE, expression) && !checkType(CHAR_TYPE, expression) && !checkType(STRING_TYPE, expression) &&
-		!checkType(INTEGER_TYPE, expression))
-		parseError("print() may only receive boolean, character, string, or integer type");
+Expression *newPrint(Expression *expression) { return newExpression(PRINT_OP, expression, NULL); }
 
-	return newStatement(PRINT_STMT, expression);
+Statement *newRead(StatementType readType, Expression *expression) {
+	switch (readType) {
+		case READ_CHAR_STMT:
+			/* code */
+		case READ_STRING_STMT:
+		case READ_INT_STMT:
+		case READ_BOOL_STMT:
+
+		default:
+			break;
+	}
+
+	return NULL;
 }
-
-// Statement *newRead(StatementType readType, Expression *expression) {
-// 	switch (readType) {
-// 		case READ_CHAR_STMT:
-// 			/* code */
-
-// 		default:
-// 			break;
-// 	}
-// }
 
 Statement *newBlock(LinkedList *statementList) {
 	Statement *statement = malloc(sizeof(Statement));
@@ -311,7 +316,7 @@ void newPredicate(char *symbol, char *parameter, Statement *block) {
 	predicate->parameter = parameter;
 
 	addToList(predicates, predicate);
-	
+
 	Variable *var = malloc(sizeof(Variable));
 	var->symbol = symbol;
 	var->type = PREDICATE_TYPE;
