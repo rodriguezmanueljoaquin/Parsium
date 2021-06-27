@@ -284,8 +284,6 @@ Statement *newBlock(LinkedList *statementList) {
 void newPredicate(char *symbol, char *parameter, Statement *block) {
 	if (findPredicate(symbol) != NULL)
 		parseError("Predicate already defined");
-	if (strcmp(DEFAULT_PREDICATE, symbol) == 0)
-		parseError("Predicate can't have name "DEFAULT_PREDICATE);
 
 	Predicate *predicate = malloc(sizeof(Predicate));
 	predicate->symbol = symbol;

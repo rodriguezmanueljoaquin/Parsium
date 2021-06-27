@@ -5,7 +5,7 @@
 #include <linkedlist.h>
 #include <stdbool.h>
 
-#define DEFAULT_PREDICATE "cmp_char"
+#define NULL_STR "NULL"
 
 typedef enum {
 	AND_OP,

@@ -347,7 +347,7 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 		char *when, *character = malloc(strlen(NO_CHAR));
 		for (size_t j = 0; auxTransitionNode != NULL; auxTransitionNode = auxTransitionNode->next, j++) {
 			auxTransition = auxTransitionNode->value;
-			when = DEFAULT_PREDICATE;
+			when = NULL_STR;
 			strcpy(character, NO_CHAR);
 			if (auxTransition->condition->predicate != NULL)
 				when = auxTransition->condition->predicate->symbol;
@@ -459,11 +459,11 @@ static void translateMachineParser(char *machineSymbol) {
 
 	indentationLevel++;
 	printIndentation();
-	printf("if (states_%s[current_state][j].when == ANY ||\n", machineSymbol);
+	printf("if((states_%s[current_state][j].character != 0 && current_char == states_%s[current_state][j].character) ||\n", 
+				machineSymbol, machineSymbol);
 	indentationLevel++;
 	printIndentation();
-	printf("(states_%s[current_state][j].character != 0 && current_char == states_%s[current_state][j].character) ||\n", 
-				machineSymbol, machineSymbol);
+	printf("states_%s[current_state][j].when == ANY ||\n", machineSymbol);
 	printIndentation();
 	printf("states_%s[current_state][j].when(current_char)) {\n", machineSymbol);
 
@@ -554,8 +554,6 @@ static void translatePredicates(LinkedList *predicates) {
 		node = node->next;
 	}
 	putchar('\n');
-
-	printf("bool "DEFAULT_PREDICATE"(char c){return false;}\n");
 
 	node = predicates->first;
 	while (node != NULL) {
