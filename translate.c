@@ -94,7 +94,6 @@ static void translateStatement(Statement *statement) {
 			break;
 		case DECLARE_STMT:
 			translateDeclaration(statement->data.declaration);
-			putchar(';');
 			break;
 		case EXPRESSION_STMT:
 			printIndentation();
