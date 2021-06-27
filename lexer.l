@@ -45,6 +45,11 @@ if                                  return IF;
 else                                return ELSE;
 while                               return WHILE;
 
+NULL								return NULL_TOKEN;
+N									return N_MACRO;
+ANY									return ANY_MACRO;
+NO_CHAR								return NO_CHAR_MACRO;
+
 ->                                  return ARROW;
 
 =                               	return ASSIGN;

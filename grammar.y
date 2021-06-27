@@ -63,6 +63,7 @@
 %token ARROW
 %token WHEN PARSE WITH
 %token IF ELSE WHILE
+%token NULL_TOKEN N_MACRO ANY_MACRO NO_CHAR_MACRO
 
 %right ASSIGN
 %left  OR
@@ -203,6 +204,7 @@ transition  :   IDENT ARROW IDENT WHEN transition_when      {$$ = newTransition(
 
 transition_when :   IDENT                                   {$$ = newTransitionCondition($1, 0);}
                 |   CHAR                                    {$$ = newTransitionCondition(NULL, $1);}
+                |   ANY_MACRO                               {$$ = newTransitionCondition(NULL, 0);}
                 ;
 
 final_state_array :   '[' final_state_array_elem ']'                {$$ = $2;}

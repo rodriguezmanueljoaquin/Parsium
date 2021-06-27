@@ -358,11 +358,13 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 			auxTransition = auxTransitionNode->value;
 			when = NULL_STR;
 			strcpy(character, NO_CHAR);
-			if (auxTransition->condition->predicate != NULL)
-				when = auxTransition->condition->predicate->symbol;
-			if (auxTransition->condition->character != 0) {
+			if (auxTransition->condition->character != 0) 
 				sprintf(character, "'%c'", auxTransition->condition->character);
-			}
+			else if (auxTransition->condition->predicate != NULL)
+				when = auxTransition->condition->predicate->symbol;
+			else
+				when = "ANY";
+			
 			printIndentation();
 			printf("{.when = %s, .destination = PS_%s_%s, .character = %s},\n", when, machineSymbol, auxTransition->toState,
 				   character);
