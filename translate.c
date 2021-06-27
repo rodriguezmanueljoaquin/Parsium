@@ -535,7 +535,7 @@ static void translatePredicates(LinkedList *predicates) {
 	node = predicates->first;
 	while (node != NULL) {
 		predicate = node->value;
-		printf("bool %s(char x);\n", predicate->symbol);
+		printf("bool %s(char %s);\n", predicate->symbol, predicate->parameter);
 		node = node->next;
 	}
 	putchar('\n');

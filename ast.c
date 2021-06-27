@@ -272,12 +272,6 @@ void newPredicate(char *symbol, char *parameter, Statement *block) {
 	if (findPredicate(symbol) != NULL)
 		parseError("Predicate already defined");
 
-	Variable *var = malloc(sizeof(Variable));
-	var->symbol = symbol;
-	var->type = CHAR_TYPE;
-
-	addToList(peekScope(), var);
-
 	Predicate *predicate = malloc(sizeof(Predicate));
 	predicate->symbol = symbol;
 	predicate->block = block;

@@ -94,10 +94,10 @@ statement   :   operation ';'                           {$$ = $1;}
             |   WHILE {pushScope();} '(' expression ')' block                               {$$ = newLoop($4, $6, "\0", "\0");}
             ;
 
-if_declaration  : IF {pushScope();} 
+if_declaration  : IF                                    {pushScope();} 
                 ;
 
-block       :   '{'  statement_list '}'	                {popScope(); $$ = newBlock($2);}
+block       :   '{'  statement_list '}'	                {$$ = newBlock($2); popScope();}
             ;
 
 operation   :   PRINT CHAR            	                {printf("// [DEBUG]: %c\n", (unsigned char)$2);}
@@ -117,10 +117,10 @@ definition  :   DEFINE type IDENT ASSIGN expression     {
                                                                 $$ = NULL; // para que no se guarde en TREE_LIST
                                                             }
                                                         }
-            |   DEFINE PREDICATE_DEF {pushScope();} IDENT ASSIGN '(' IDENT ')' block  {
-                                                                                            $$ = NULL;
-                                                                                            newPredicate($4, $7, $9);
-                                                                                        }
+            |   DEFINE PREDICATE_DEF {pushScope();} IDENT ASSIGN '(' IDENT {newDeclaration(CHAR_TYPE, $7, NULL);} ')' block  {
+                                                                                                                                    $$ = NULL;
+                                                                                                                                    newPredicate($4, $7, $10);
+                                                                                                                            }
             ;
 
 assignment  :   IDENT ASSIGN expression                 {$$ = newAssignment($1, $3);}
