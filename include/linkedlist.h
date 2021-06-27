@@ -19,4 +19,6 @@ void addToList(LinkedList *list, void *data);
 
 bool machineStatesContains(LinkedList *list, char *symbol);
 
+Node *popLastNode(LinkedList *list);
+
 #endif

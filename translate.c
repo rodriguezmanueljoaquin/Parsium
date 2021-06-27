@@ -5,9 +5,10 @@
 #include <string.h>
 #include <translate.h>
 
+static void printIndentation();
 static void translateMachineDefinitions(LinkedList *machines);
 static void translateStatement(Statement *statement);
-static void translateDeclaration(Variable *variable);
+static void translateDeclaration(Declaration *declaration);
 static void translateConditional(Conditional *conditional);
 static void translateAssignment(Assignment *assignment);
 static void translateExpression(Expression *expression);
@@ -18,7 +19,6 @@ static void translateMachineParser(char *machineSymbol);
 static void translateMachineExecutionFunction(LinkedList *machineStates, char *machineSymbol, char *startNodeSymbol);
 static void translateBlock(Statement *block);
 static void translateLoop(Loop *loop);
-static void translateGlobalVariables(LinkedList *variables);
 static void translatePredicates(LinkedList *predicates);
 
 static size_t indentationLevel = 0;
@@ -28,40 +28,8 @@ static char *header = "#include <stdio.h>\n"
 					  "#define N(x) (sizeof(x) / sizeof((x)[0]))\n"
 					  "#define ANY NULL\n\n";
 
-static void printIndentation() {
-	for (size_t i = 0; i < indentationLevel; i++) {
-		putchar('\t');
-	}
-}
-
-static void translatePredicates(LinkedList *predicates) {
-	Node *node = predicates->first;
-	Predicate *predicate;
-
-	node = predicates->first;
-	while (node != NULL) {
-		predicate = node->value;
-		printf("bool %s(char x);\n", predicate->symbol);
-		node = node->next;
-	}
-	putchar('\n');
-
-	node = predicates->first;
-	while (node != NULL) {
-		predicate = node->value;
-		printf("bool %s(char x)", predicate->symbol);
-
-		translateBlock(predicate->block);
-
-		printf("\n");
-		node = node->next;
-	}
-	putchar('\n');
-}
-
-void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates, LinkedList *variables) {
+void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates) {
 	printf("%s", header);
-	translateGlobalVariables(variables);
 
 	translatePredicates(predicates); // poner prototipos y luego definirlas
 
@@ -78,15 +46,6 @@ void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates, Li
 	indentationLevel--;
 	printIndentation();
 	printf("}\n");
-}
-
-static void translateGlobalVariables(LinkedList *variables) {
-	Node *aux = variables->first;
-	while (aux != NULL) {
-		translateDeclaration(aux->value);
-		aux = aux->next;
-	}
-	putchar('\n');
 }
 
 static void checkMachineStates(LinkedList *machineStates, MachineType *currentMachine) {
@@ -134,11 +93,8 @@ static void translateStatement(Statement *statement) {
 			putchar(';');
 			break;
 		case DECLARE_STMT:
-			if (statement->data.declaration->value != NULL) {
-				translateAssignment(
-					newAssignment(statement->data.declaration->symbol, statement->data.declaration->value)->data.assignment);
-				putchar(';');
-			}
+			translateDeclaration(statement->data.declaration);
+			putchar(';');
 			break;
 		case EXPRESSION_STMT:
 			printIndentation();
@@ -184,9 +140,9 @@ static void translateBlock(Statement *block) {
 	printf("}");
 }
 
-static void translateDeclaration(Variable *variable) {
+static void translateDeclaration(Declaration *declaration) {
 	printIndentation();
-	switch (variable->type) {
+	switch (declaration->type) {
 		case CHAR_TYPE:
 		case CHAR_ARRAY_TYPE:
 			printf("char ");
@@ -219,10 +175,14 @@ static void translateDeclaration(Variable *variable) {
 			printf("\n error translateDeclaration() \n");
 			break;
 	}
-	printf("%s", variable->symbol);
-	if (variable->type == CHAR_ARRAY_TYPE)
+	printf("%s", declaration->symbol);
+	if (declaration->type == CHAR_ARRAY_TYPE)
 		printf("[]");
 
+	if (declaration->value != NULL) {
+        printf(" = ");
+        translateExpression(declaration->value);
+    }
 	printf(";\n");
 }
 
@@ -306,8 +266,8 @@ static void translateExpression(Expression *expression) {
 			break;
 		case MINUS_OP:
 			if (expression->exp1 != NULL) {
-				translateExpression(expression->exp1);	
-			} 
+				translateExpression(expression->exp1);
+			}
 			printf(" - ");
 			translateExpression(expression->exp2);
 			break;
@@ -560,4 +520,35 @@ static void translateMachineExecutionFunction(LinkedList *machineStates, char *m
 	indentationLevel--;
 	printIndentation();
 	printf("}\n\n");
+}
+
+static void printIndentation() {
+	for (size_t i = 0; i < indentationLevel; i++) {
+		putchar('\t');
+	}
+}
+
+static void translatePredicates(LinkedList *predicates) {
+	Node *node = predicates->first;
+	Predicate *predicate;
+
+	node = predicates->first;
+	while (node != NULL) {
+		predicate = node->value;
+		printf("bool %s(char x);\n", predicate->symbol);
+		node = node->next;
+	}
+	putchar('\n');
+
+	node = predicates->first;
+	while (node != NULL) {
+		predicate = node->value;
+		printf("bool %s(char %s)", predicate->symbol, predicate->parameter);
+
+		translateBlock(predicate->block);
+
+		printf("\n");
+		node = node->next;
+	}
+	putchar('\n');
 }

@@ -4,6 +4,6 @@
 #include <ast.h>
 #include <linkedlist.h>
 
-void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates, LinkedList *variables);
+void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates);
 
 #endif

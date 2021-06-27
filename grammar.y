@@ -4,15 +4,13 @@
     #include <ast.h>
     #include <linkedlist.h>
     #include <translate.h>
-
-    #define PREDICATE_PARAM_SYMBOL  "x"
     
     enum {TREE_LIST, MACHINE_LIST, LIST_COUNT};
     
     extern int yylineno;
 
-	extern LinkedList *variables;
 	extern LinkedList *predicates;
+	extern LinkedList *variableScopes;
 
     int yylex_destroy();
     int yylex();
@@ -62,7 +60,6 @@
 %token ARROW
 %token WHEN PARSE WITH
 %token IF ELSE WHILE
-%token PREDICATE_PARAM
 
 %right ASSIGN
 %left  OR
@@ -92,12 +89,15 @@ statement   :   operation ';'                           {$$ = $1;}
             |   ';'                                     {;}
             |   assignment ';'                          {$$ = $1;}
             |   expression ';'                          {$$ = newStatement(EXPRESSION_STMT, $1);}
-			|	IF '(' expression ')' block ELSE block  {$$ = newConditional($3, $5, $7);}
-			|	IF '(' expression ')' block             {$$ = newConditional($3, $5, NULL);}
-            |   WHILE '(' expression ')' block          {$$ = newLoop($3, $5, "\0", "\0");}
+			|	if_declaration '(' expression ')' block ELSE {pushScope();} block        {$$ = newConditional($3, $5, $8);}
+			|	if_declaration '(' expression ')' block                                  {$$ = newConditional($3, $5, NULL);}
+            |   WHILE {pushScope();} '(' expression ')' block                               {$$ = newLoop($4, $6, "\0", "\0");}
             ;
 
-block       :   '{' statement_list '}'					{$$ = newBlock($2);}
+if_declaration  : IF {pushScope();} 
+                ;
+
+block       :   '{'  statement_list '}'	                {popScope(); $$ = newBlock($2);}
             ;
 
 operation   :   PRINT CHAR            	                {printf("// [DEBUG]: %c\n", (unsigned char)$2);}
@@ -117,10 +117,10 @@ definition  :   DEFINE type IDENT ASSIGN expression     {
                                                                 $$ = NULL; // para que no se guarde en TREE_LIST
                                                             }
                                                         }
-            |   DEFINE PREDICATE_DEF IDENT ASSIGN PREDICATE_PARAM block {
-                                                                            $$ = NULL;
-                                                                            newPredicate($3, $6);
-                                                                        }
+            |   DEFINE PREDICATE_DEF {pushScope();} IDENT ASSIGN '(' IDENT ')' block  {
+                                                                                            $$ = NULL;
+                                                                                            newPredicate($4, $7, $9);
+                                                                                        }
             ;
 
 assignment  :   IDENT ASSIGN expression                 {$$ = newAssignment($1, $3);}
@@ -199,17 +199,12 @@ final_state_array_elem   :   IDENT                            {$$ = newList(); a
 
 %%
 int main(int argc, char *argv[]) {
-	
-    variables = newList();
-    Variable *var = malloc(sizeof(Variable));
-	var->symbol = PREDICATE_PARAM_SYMBOL;
-	var->type = CHAR_TYPE;
-    addToList(variables, var);
-
 	predicates = newList();
+    variableScopes = newList();
+    pushScope();
     LinkedList *args[LIST_COUNT] = {0};
     yyparse(args);
     yylex_destroy();
-    translate(args[TREE_LIST], args[MACHINE_LIST], predicates, variables);
+    translate(args[TREE_LIST], args[MACHINE_LIST], predicates);
     return 0;
 }

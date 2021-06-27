@@ -94,6 +94,7 @@ typedef struct Loop {
 
 typedef struct Predicate {
 	char *symbol;
+	char *parameter;
 	Statement *block;
 } Predicate;
 
@@ -139,9 +140,14 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value);
 Statement *newLoop(Expression *condition, Statement *block, char *init, char *increment);
 Statement *newStatement(StatementType type, Expression *expression);
 Statement *newBlock(LinkedList *statementList);
-void newPredicate(char *symbol, Statement *block);
+void newPredicate(char *symbol, char *parameter, Statement *block);
 
-Variable *findVariable(LinkedList *list, char *symbol);
+Variable *findVariableInScope(LinkedList *list, char *symbol);
 Predicate *findPredicate(char *symbol);
+
+void pushScope();
+void popScope();
+LinkedList *peekScope();
+Variable *findVariable(char *symbol);
 
 #endif

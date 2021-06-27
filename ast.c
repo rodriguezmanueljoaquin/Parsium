@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-LinkedList *variables;
+LinkedList *variableScopes;
 LinkedList *predicates;
 
 void parseError(char *message);
-void checkTypeWithExit(ValueType type, Expression *value);
-bool checkType(ValueType type, Expression *value);
+static void checkTypeWithExit(ValueType type, Expression *value);
+static bool checkType(ValueType type, Expression *value);
 
 void parseError(char *message) {
 	fprintf(stderr, "Syntax error: %s\n", message);
@@ -17,7 +17,7 @@ void parseError(char *message) {
 }
 
 Expression *newSymbol(char *identifier) {
-	if (findVariable(variables, identifier) == NULL)
+	if (findVariable(identifier) == NULL)
 		parseError("Variable undefined");
 	Expression *expression = malloc(sizeof(Expression));
 	expression->type = SYMBOL_TYPE;
@@ -123,10 +123,12 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 		case LT_OP:
 		case GE_OP:
 		case LE_OP:
-			checkTypeWithExit(INTEGER_TYPE, exp1);
-			checkTypeWithExit(INTEGER_TYPE, exp2);
-			expType = BOOL_TYPE;
-			break;
+			if ((checkType(INTEGER_TYPE, exp1) && checkType(INTEGER_TYPE, exp2)) ||
+				(checkType(CHAR_TYPE, exp1) && checkType(CHAR_TYPE, exp2))) {
+				expType = BOOL_TYPE;
+				break;
+			} else
+				parseError("Error: Only comparable types are char and int");
 		case MULT_OP:
 		case DIV_OP:
 		case MOD_OP:
@@ -164,7 +166,7 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 }
 
 Expression *newParseExpression(char *machineSymbol, char *string) {
-	Variable *var = findVariable(variables, machineSymbol);
+	Variable *var = findVariable(machineSymbol);
 	if (var == NULL)
 		parseError("Machine undefined");
 	if (var->type != MACHINE_TYPE)
@@ -191,14 +193,14 @@ Statement *newConditional(Expression *condition, Statement *affirmative, Stateme
 	return statement;
 }
 
-void checkTypeWithExit(ValueType type, Expression *value) {
+static void checkTypeWithExit(ValueType type, Expression *value) {
 	if (!checkType(type, value))
 		parseError("Assignment conflict");
 }
 
-bool checkType(ValueType type, Expression *value) {
+static bool checkType(ValueType type, Expression *value) {
 	if (value != NULL && type != value->type) {
-		if (value->type != SYMBOL_TYPE || type != findVariable(variables, value->value)->type)
+		if (value->type != SYMBOL_TYPE || type != findVariable(value->value)->type)
 			return false;
 	}
 
@@ -206,7 +208,7 @@ bool checkType(ValueType type, Expression *value) {
 }
 
 Statement *newAssignment(char *symbol, Expression *value) {
-	Variable *var = findVariable(variables, symbol);
+	Variable *var = findVariable(symbol);
 	if (var == NULL)
 		parseError("Variable undefined");
 
@@ -221,7 +223,7 @@ Statement *newAssignment(char *symbol, Expression *value) {
 }
 
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
-	if (findVariable(variables, symbol) != NULL)
+	if (findVariableInScope(peekScope(), symbol) != NULL)
 		parseError("Variable already defined");
 
 	checkTypeWithExit(type, value);
@@ -237,7 +239,7 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 	var->symbol = symbol;
 	var->type = type;
 
-	addToList(variables, var);
+	addToList(peekScope(), var);
 	return statement;
 }
 
@@ -266,24 +268,50 @@ Statement *newBlock(LinkedList *statementList) {
 	return statement;
 }
 
-void newPredicate(char *symbol, Statement *block) {
+void newPredicate(char *symbol, char *parameter, Statement *block) {
 	if (findPredicate(symbol) != NULL)
 		parseError("Predicate already defined");
+
+	Variable *var = malloc(sizeof(Variable));
+	var->symbol = symbol;
+	var->type = CHAR_TYPE;
+
+	addToList(peekScope(), var);
 
 	Predicate *predicate = malloc(sizeof(Predicate));
 	predicate->symbol = symbol;
 	predicate->block = block;
+	predicate->parameter = parameter;
 
 	addToList(predicates, predicate);
 }
 
-Variable *findVariable(LinkedList *list, char *symbol) {
-	Node *aux = list->first;
-	while (aux != NULL) {
-		if (strcmp(((Variable *)aux->value)->symbol, symbol) == 0)
-			return aux->value;
+void pushScope() {
+	LinkedList *newScope = newList();
+	addToList(variableScopes, newScope);
+}
 
-		aux = aux->next;
+void popScope() { popLastNode(variableScopes); }
+
+LinkedList *peekScope() { return variableScopes->last->value; }
+
+Variable *findVariable(char *symbol) {
+	Node *scopeNode = variableScopes->first;
+	Variable *aux = NULL;
+	while (scopeNode != NULL && aux == NULL) {
+		aux = findVariableInScope(scopeNode->value, symbol);
+		scopeNode = scopeNode->next;
+	}
+	return aux;
+}
+
+Variable *findVariableInScope(LinkedList *list, char *symbol) {
+	Node *node = list->first;
+	while (node != NULL) {
+		if (strcmp(((Variable *)node->value)->symbol, symbol) == 0)
+			return node->value;
+
+		node = node->next;
 	}
 	return NULL;
 }

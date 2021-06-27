@@ -63,8 +63,6 @@ while                               return WHILE;
 \<\<									return MACHINE_OPEN;
 >>									return MACHINE_CLOSE;
 
-\(x\)                               return PREDICATE_PARAM;
-
 -?[0-9]+								{ 
 										char *end = NULL;
 										yylval.integer = strtol(yytext, &end, 10);

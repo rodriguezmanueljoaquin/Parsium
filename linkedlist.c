@@ -37,3 +37,22 @@ bool machineStatesContains(LinkedList *list, char *symbol) {
 	}
 	return false;
 }
+
+Node *popLastNode(LinkedList *list) {
+	if(list == NULL || list->first == NULL || list->last == NULL)
+		return NULL;
+
+	Node *aux = list->first, *last = list->last;
+	if(aux->next == NULL) {
+		list->first = NULL;
+		list->last = NULL;
+		return last;
+	}
+	
+	while(aux->next->next != NULL)
+		aux = aux->next;
+
+	list->last = aux;
+	aux->next = NULL;
+	return last;
+}
