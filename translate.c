@@ -23,6 +23,7 @@ static void translatePredicates(LinkedList *predicates);
 static void translatePrintType(Expression *expression);
 static void translateGlobalVariables(LinkedList *variables);
 static void translateDefaultPredicates();
+static void translateCall(PredicateCall *call);
 
 static size_t indentationLevel = 0;
 
@@ -304,7 +305,7 @@ static void translateExpression(Expression *expression) {
 			printf("run_machine_%s(\"%s\")", (char *)expression->exp1->value, (char *)expression->exp2->value);
 			break;
 		case EXEC_OP:
-			// TODO
+			translateCall(expression->value);
 			break;
 		case SYMBOL_OP:
 			printf("%s", (char *)expression->value);
@@ -635,4 +636,11 @@ static void translateDefaultPredicates() {
 		   "\t\treturn true;\n"
 		   "\treturn false;\n"
 		   "}\n\n", DEFAULT_PREDICATE_ISNUMBER);
+}
+
+static void translateCall(PredicateCall *call) {
+	if(call->parameter != NULL)
+		printf("%s(%s)", call->symbol, call->parameter);
+	else
+		printf("%s('%c')", call->symbol, call->character);
 }

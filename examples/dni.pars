@@ -1,0 +1,22 @@
+//  Parser para DNI argentino con el siguiente formato: XX.XXX.XXX
+
+def machine dni = <<
+    transitions = [ n0->n1      when isNumber, 
+                    n1->point1  when isNumber,
+                    point1->n2  when '.',
+                    n2->n3      when isNumber,
+                    n3->n4      when isNumber, 
+                    n4->point2  when isNumber,
+                    point2->n5  when '.',
+                    n5->n6      when isNumber, 
+                    n6->n7      when isNumber,
+                    n7->final   when isNumber
+                    ], 
+    initialState = n0, 
+    finalStates = [final]
+>>;
+
+parse "11.222.333" with dni;
+parse "11.222" with dni;
+parse "11.222.333.444" with dni;
+parse "111.222.333" with dni;

@@ -392,3 +392,22 @@ Predicate *findPredicate(char *symbol) {
 	}
 	return NULL;
 }
+
+Expression *newPredicateCall(char *symbol, char *parameter, char character) {	
+	if (findPredicate(symbol) == NULL)
+		parseError("Predicate not defined");
+	if (parameter != NULL && findVariable(parameter) == NULL)
+		parseError("Variable not defined");
+
+	PredicateCall *call = malloc(sizeof(PredicateCall));
+	call->symbol = symbol;
+	call->parameter = parameter;
+	call->character = character;
+
+	Expression *expression = malloc(sizeof(Expression));
+	expression->type = SYMBOL_TYPE;
+	expression->op = EXEC_OP;
+	expression->value = call;
+
+	return expression;
+}

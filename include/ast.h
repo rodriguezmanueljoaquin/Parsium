@@ -110,6 +110,12 @@ typedef struct Predicate {
 	Statement *block;
 } Predicate;
 
+typedef struct PredicateCall {
+	char *symbol;
+	char *parameter;
+	char character;
+} PredicateCall;
+
 typedef struct TransitionCondition {
 	Predicate *predicate;
 	char character;
@@ -151,6 +157,7 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2);
 Expression *newPrint(Expression *expression);
 Expression *newParseExpression(char *machineSymbol, char *string);
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates);
+Expression *newPredicateCall(char *symbol, char *parameter, char character);
 Transition *newTransition(char *fromState, char *toState, TransitionCondition *when);
 TransitionCondition *newTransitionCondition(char *predicate, char character);
 Statement *newConditional(Expression *condition, Statement *affirmative, Statement *negative);
