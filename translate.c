@@ -554,17 +554,27 @@ static void translateMachineParser(char *machineSymbol) {
 
 	indentationLevel++;
 	printIndentation();
-	printf("if (states_%s[current_state][j].character != 0) {\n", machineSymbol);
+	printf("if (states_%s[current_state][j].character != NO_CHAR) {\n", machineSymbol);
 
 	indentationLevel++;
 		printIndentation();
-		printf("if (current_char != states_%s[current_state][j].character) break;\n", machineSymbol);
+		printf("if (current_char == states_%s[current_state][j].character) {\n", machineSymbol);
+		indentationLevel++;
+		printIndentation();
+		printf("current_state = states_%s[current_state][j].destination;\n", machineSymbol);
+		printIndentation();
+		printf("break;}\n");
+		indentationLevel--;
 	indentationLevel--;
 
 	printIndentation();
-	printf( "} else if (states_%s[current_state][j].when != ANY & !states_%s[current_state][j].when(current_char)) break;\n", machineSymbol, machineSymbol);
+	printf( "} else if (states_%s[current_state][j].when == ANY || states_%s[current_state][j].when(current_char)){\n", machineSymbol, machineSymbol);
+	indentationLevel++;
 	printIndentation();
 	printf( "current_state = states_%s[current_state][j].destination;\n", machineSymbol);
+	printIndentation();
+	printf("break;}\n");
+	indentationLevel--;
 	indentationLevel--;
 
 	printIndentation();
