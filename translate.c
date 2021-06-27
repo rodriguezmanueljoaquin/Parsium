@@ -20,6 +20,7 @@ static void translateMachineExecutionFunction(LinkedList *machineStates, char *m
 static void translateBlock(Statement *block);
 static void translateLoop(Loop *loop);
 static void translatePredicates(LinkedList *predicates);
+static void translatePrintType(Expression *expression);
 
 static size_t indentationLevel = 0;
 
@@ -27,13 +28,12 @@ static char *header = "#include <stdio.h>\n"
 					  "#include <stdbool.h>\n"
 					  "#define N(x) (sizeof(x) / sizeof((x)[0]))\n"
 					  "#define ANY NULL\n"
-					  "#define "NO_CHAR" 0\n\n";
+					  "#define " NO_CHAR " 0\n\n";
 
 void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates) {
 	printf("%s", header);
 
 	translatePredicates(predicates); // poner prototipos y luego definirlas
-
 	translateMachineDefinitions(machines);
 
 	Node *currentList = ast->first;
@@ -109,6 +109,12 @@ static void translateStatement(Statement *statement) {
 			translateExpression(statement->data.expression);
 			putchar(';');
 			break;
+		case PRINT_STMT:
+			printIndentation();
+			printf("printf(");
+			translatePrintType(statement->data.expression);
+			printf(");");
+			break;
 		case BLOCK_STMT:
 			translateBlock(statement);
 			break;
@@ -180,9 +186,9 @@ static void translateDeclaration(Declaration *declaration) {
 		printf("[]");
 
 	if (declaration->value != NULL) {
-        printf(" = ");
-        translateExpression(declaration->value);
-    }
+		printf(" = ");
+		translateExpression(declaration->value);
+	}
 	printf(";\n");
 }
 
@@ -315,6 +321,9 @@ static void translateConstant(ValueType type, void *value) {
 		case INTEGER_TYPE:
 			printf("%ld", *(long *)value);
 			break;
+		case STRING_TYPE:
+			printf("\"%s\"", (char *)value);
+			break;
 		case CHAR_ARRAY_TYPE:
 			putchar('{');
 			Node *current = ((LinkedList *)value)->first;
@@ -355,7 +364,8 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 				sprintf(character, "'%c'", auxTransition->condition->character);
 			}
 			printIndentation();
-			printf("{.when = %s, .destination = PS_%s_%s, .character = %s},\n", when, machineSymbol, auxTransition->toState, character);
+			printf("{.when = %s, .destination = PS_%s_%s, .character = %s},\n", when, machineSymbol, auxTransition->toState,
+				   character);
 		}
 		printIndentation();
 		printf("{.when = ANY, .destination = PS_%s_ERROR, .character = NO_CHAR},\n", machineSymbol);
@@ -459,8 +469,8 @@ static void translateMachineParser(char *machineSymbol) {
 
 	indentationLevel++;
 	printIndentation();
-	printf("if((states_%s[current_state][j].character != 0 && current_char == states_%s[current_state][j].character) ||\n", 
-				machineSymbol, machineSymbol);
+	printf("if((states_%s[current_state][j].character != 0 && current_char == states_%s[current_state][j].character) ||\n",
+		   machineSymbol, machineSymbol);
 	indentationLevel++;
 	printIndentation();
 	printf("states_%s[current_state][j].when == ANY ||\n", machineSymbol);
@@ -566,4 +576,37 @@ static void translatePredicates(LinkedList *predicates) {
 		node = node->next;
 	}
 	putchar('\n');
+}
+
+static void translatePrintType(Expression *expression) {
+	ValueType printType;
+	if (expression->type == SYMBOL_TYPE)
+		printType = findVariable((char *)expression->value)->type;
+	else
+		printType = expression->type;
+
+	switch (printType) {
+		case CHAR_TYPE:
+			printf("\"%%c\", ");
+			translateExpression(expression);
+			break;
+		case INTEGER_TYPE:
+			printf("\"%%ld\", ");
+			translateExpression(expression);
+			break;
+		case STRING_TYPE:
+			printf("\"%%s\", ");
+			translateExpression(expression);
+			break;
+		case BOOL_TYPE:
+			printf("\"%%s\", ");
+			translateExpression(expression);
+			printf(" ? \"true\" : \"false\"");
+			break;
+		case SYMBOL_TYPE:
+			printf("elbeto");
+			break;
+		default:
+			break;
+	}
 }

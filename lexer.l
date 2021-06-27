@@ -24,11 +24,17 @@ def                             	return DEFINE;
 machine							    return MACHINE_DEF;
 predicate                           return PREDICATE_DEF;
 int									return INTEGER_DEF;
+string								return STRING_DEF;
 
 transitions                         return TRANSITIONS_DEF;
 initialState                        return INITIAL_STATE_DEF;
 finalStates                         return FINAL_STATES_DEF;
-print                           	return PRINT;
+print                        		return PRINT;
+readString							return READ_STRING;
+readInt								return READ_INT;
+readChar							return READ_CHAR;
+readBool							return READ_BOOL;
+
 true                            	{ yylval.boolean = true; return BOOL;}
 false                           	{ yylval.boolean = false; return BOOL;}
 when                                return WHEN;

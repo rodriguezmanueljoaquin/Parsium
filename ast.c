@@ -40,8 +40,8 @@ Expression *newInteger(long number) {
 
 Expression *newString(char *string) {
 	Expression *expression = malloc(sizeof(Expression));
-	expression->type = SYMBOL_TYPE;
-	expression->op = SYMBOL_OP;
+	expression->type = STRING_TYPE;
+	expression->op = CONST_OP;
 	expression->value = string;
 
 	return expression;
@@ -92,7 +92,7 @@ TransitionCondition *newTransitionCondition(char *predicate, char character) {
 	TransitionCondition *condition = malloc(sizeof(TransitionCondition));
 	Predicate *aux = NULL;
 
-	if(predicate != NULL) {
+	if (predicate != NULL) {
 		aux = findPredicate(predicate);
 		if (aux == NULL)
 			parseError("Predicate undefined");
@@ -240,6 +240,8 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 		parseError("Variable already defined");
 
 	checkTypeWithExit(type, value);
+//	if (type != value->type)
+//		parseError("Left value type does not match right value type");
 
 	Statement *statement = malloc(sizeof(Statement));
 	statement->data.declaration = malloc(sizeof(Declaration));
@@ -274,6 +276,24 @@ Statement *newStatement(StatementType type, Expression *expression) {
 	return statement;
 }
 
+Statement *newPrint(Expression *expression) {
+	if (!checkType(BOOL_TYPE, expression) && !checkType(CHAR_TYPE, expression) && !checkType(STRING_TYPE, expression) &&
+		!checkType(INTEGER_TYPE, expression))
+		parseError("print() may only receive boolean, character, string, or integer type");
+
+	return newStatement(PRINT_STMT, expression);
+}
+
+// Statement *newRead(StatementType readType, Expression *expression) {
+// 	switch (readType) {
+// 		case READ_CHAR_STMT:
+// 			/* code */
+
+// 		default:
+// 			break;
+// 	}
+// }
+
 Statement *newBlock(LinkedList *statementList) {
 	Statement *statement = malloc(sizeof(Statement));
 	statement->type = BLOCK_STMT;
@@ -291,6 +311,12 @@ void newPredicate(char *symbol, char *parameter, Statement *block) {
 	predicate->parameter = parameter;
 
 	addToList(predicates, predicate);
+	
+	Variable *var = malloc(sizeof(Variable));
+	var->symbol = symbol;
+	var->type = PREDICATE_TYPE;
+
+	addToList(peekScope(), var);
 }
 
 void pushScope() {

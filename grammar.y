@@ -43,7 +43,7 @@
 
 %type <valuetype> type
 %type <expression> term expression binary_operation unary_operation array machine 
-%type <statement> definition declaration operation statement assignment block
+%type <statement> definition declaration basic_statement statement assignment block
 %type <linkedlist> S statement_list char_array_elem char_array transition_array_elem transition_array final_state_array_elem final_state_array
 %type <transition> transition
 %type <transitionCondition> transition_when
@@ -54,9 +54,10 @@
 %token ASSIGN
 %token <character> CHAR
 %token <boolean> BOOL
-%token CHAR_DEF BOOL_DEF CHAR_ARRAY_DEF MACHINE_DEF TRANSITIONS_DEF INITIAL_STATE_DEF FINAL_STATES_DEF PREDICATE_DEF INTEGER_DEF
+%token CHAR_DEF BOOL_DEF CHAR_ARRAY_DEF MACHINE_DEF TRANSITIONS_DEF INITIAL_STATE_DEF FINAL_STATES_DEF PREDICATE_DEF INTEGER_DEF STRING_DEF
 %token AND OR EQ NE NOT
 %token PRINT
+%token READ_STRING READ_INT READ_CHAR READ_BOOL
 %token RETURN
 %token MACHINE_OPEN MACHINE_CLOSE
 %token ARROW
@@ -87,7 +88,7 @@ statement_list	: statement_list statement 				{if($2 != NULL) addToList($1, $2);
 			|	/*empty*/								{$$ = newList();}
 			;
 
-statement   :   operation ';'                           {$$ = $1;}
+statement   :   basic_statement ';'                     {$$ = $1;}
             |   ';'                                     {;}
             |   assignment ';'                          {$$ = $1;}
             |   expression ';'                          {$$ = newStatement(EXPRESSION_STMT, $1);}
@@ -102,12 +103,19 @@ if_declaration  : IF                                    {pushScope();}
 block       :   '{'  statement_list '}'	                {$$ = newBlock($2); popScope();}
             ;
 
-operation   :   PRINT CHAR            	                {printf("// [DEBUG]: %c\n", (unsigned char)$2);}
-            |   declaration                             {$$ = $1;}
-            |   definition                              {$$ = $1;}
-            //TODO: Validar que retorne algo booleano
-            |   RETURN expression                       {$$ = newStatement(RETURN_STMT, $2);}
-            ;
+basic_statement     :   PRINT '(' expression ')'                {$$ = newPrint($3);}
+                    /* |   read                                    {$$ = $1;} */
+                    |   declaration                             {$$ = $1;}
+                    |   definition                              {$$ = $1;}
+                    //TODO: Validar que retorne algo booleano
+                    |   RETURN expression                       {$$ = newStatement(RETURN_STMT, $2);}
+                    ;
+/* 
+read        :   READ_STRING expression                  {$$ = newRead(READ_STRING_STMT, $2);} 
+            |   READ_INT expression                     {$$ = newRead(READ_INT_STMT, $2);} 
+            |   READ_CHAR expression                    {$$ = newRead(READ_CHAR_STMT, $2);} 
+            |   READ_BOOL expression                    {$$ = newRead(READ_BOOL_STMT, $2);} 
+            ; */
 
 declaration :   DEFINE type IDENT                       {$$ = newDeclaration($2, $3, NULL);}
             ;
@@ -168,6 +176,7 @@ type        :   BOOL_DEF                                {$$ = BOOL_TYPE;}
             |   CHAR_ARRAY_DEF                          {$$ = CHAR_ARRAY_TYPE;}
             |   MACHINE_DEF                             {$$ = MACHINE_TYPE;}
 			|	INTEGER_DEF								{$$ = INTEGER_TYPE;}
+            |   STRING_DEF                              {$$ = STRING_TYPE;}
 			;
 
 array		:	char_array					            {$$ = newArray($1, CHAR_ARRAY_TYPE);}

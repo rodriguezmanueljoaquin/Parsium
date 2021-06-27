@@ -36,6 +36,11 @@ typedef enum {
 	DECLARE_STMT,
 	BREAK_STMT,
 	RETURN_STMT,
+	PRINT_STMT,
+	READ_STRING_STMT,
+	READ_INT_STMT,
+	READ_CHAR_STMT,
+	READ_BOOL_STMT,
 	BLOCK_STMT,
 	EXPRESSION_STMT
 } StatementType;
@@ -148,6 +153,8 @@ Statement *newAssignment(char *symbol, Expression *value);
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value);
 Statement *newLoop(Expression *condition, Statement *block, char *init, char *increment);
 Statement *newStatement(StatementType type, Expression *expression);
+Statement *newPrint(Expression *expression);
+// Statement *newRead(Expression *expression);
 Statement *newBlock(LinkedList *statementList);
 void newPredicate(char *symbol, char *parameter, Statement *block);
 
