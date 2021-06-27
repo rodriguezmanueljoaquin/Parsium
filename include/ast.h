@@ -28,6 +28,7 @@ typedef enum {
 	GE_OP,
 	LE_OP,
 	PRINT_OP,
+	READ_OP
 } OperationType;
 
 typedef enum {
@@ -144,7 +145,6 @@ Expression *newBool(bool b);
 Expression *newInteger(long number);
 Expression *newArray(LinkedList *list, ValueType type);
 Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2);
-Expression *newPrint(Expression *expression);
 Expression *newParseExpression(char *machineSymbol, char *string);
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates);
 Transition *newTransition(char *fromState, char *toState, TransitionCondition *when);

@@ -30,10 +30,7 @@ transitions                         return TRANSITIONS_DEF;
 initialState                        return INITIAL_STATE_DEF;
 finalStates                         return FINAL_STATES_DEF;
 print                        		return PRINT;
-readString							return READ_STRING;
-readInt								return READ_INT;
-readChar							return READ_CHAR;
-readBool							return READ_BOOL;
+read								return READ;
 
 true                            	{ yylval.boolean = true; return BOOL;}
 false                           	{ yylval.boolean = false; return BOOL;}
@@ -45,10 +42,13 @@ if                                  return IF;
 else                                return ELSE;
 while                               return WHILE;
 
-NULL								return NULL_TOKEN;
-N									return N_MACRO;
+NULL								{yy_fatal_error("NULL is a reserved keyword");}
+N									{yy_fatal_error("N is a reserved keyword");}
 ANY									return ANY_MACRO;
-NO_CHAR								return NO_CHAR_MACRO;
+NO_CHAR								{yy_fatal_error("NO_CHAR is a reserved keyword");}
+read_tmp_00							{yy_fatal_error("read_tmp_00 is a reserved keyword");}
+read_tmp_01							{yy_fatal_error("read_tmp_01 is a reserved keyword");}
+read_tmp_02							{yy_fatal_error("read_tmp_02 is a reserved keyword");};
 
 ->                                  return ARROW;
 
@@ -71,7 +71,7 @@ NO_CHAR								return NO_CHAR_MACRO;
 \/									return DIV;
 %									return MOD;
 
-\<\<									return MACHINE_OPEN;
+\<\<								return MACHINE_OPEN;
 >>									return MACHINE_CLOSE;
 
 -?[0-9]+								{ 

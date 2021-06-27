@@ -56,14 +56,13 @@
 %token <boolean> BOOL
 %token CHAR_DEF BOOL_DEF CHAR_ARRAY_DEF MACHINE_DEF TRANSITIONS_DEF INITIAL_STATE_DEF FINAL_STATES_DEF PREDICATE_DEF INTEGER_DEF STRING_DEF
 %token AND OR EQ NE NOT
-%token PRINT
-%token READ_STRING READ_INT READ_CHAR READ_BOOL
+%token PRINT READ
 %token RETURN
 %token MACHINE_OPEN MACHINE_CLOSE
 %token ARROW
 %token WHEN PARSE WITH
 %token IF ELSE WHILE
-%token NULL_TOKEN N_MACRO ANY_MACRO NO_CHAR_MACRO
+%token ANY_MACRO
 
 %right ASSIGN
 %left  OR
@@ -104,18 +103,11 @@ if_declaration  : IF                                    {pushScope();}
 block       :   '{' statement_list '}'	                {$$ = newBlock($2); popScope();}
             ;
 
-basic_statement     
-                    :   declaration                             {$$ = $1;}
+basic_statement     :   declaration                             {$$ = $1;}
                     |   definition                              {$$ = $1;}
                     //TODO: Validar que retorne algo booleano
                     |   RETURN expression                       {$$ = newStatement(RETURN_STMT, $2);}
                     ;
-/* 
-read        :   READ_STRING expression                  {$$ = newRead(READ_STRING_STMT, $2);} 
-            |   READ_INT expression                     {$$ = newRead(READ_INT_STMT, $2);} 
-            |   READ_CHAR expression                    {$$ = newRead(READ_CHAR_STMT, $2);} 
-            |   READ_BOOL expression                    {$$ = newRead(READ_BOOL_STMT, $2);} 
-            ; */
 
 declaration :   DEFINE type IDENT                       {$$ = newDeclaration($2, $3, NULL);}
             ;
@@ -162,8 +154,10 @@ unary_operation     :   '(' expression ')'                  {$$ = newExpression(
                     |   NOT expression                      {$$ = newExpression(NOT_OP, $2, NULL);}
                     |   MINUS expression                    {$$ = newExpression(MINUS_OP, NULL, $2);}
                     |   PLUS expression                     {$$ = newExpression(PLUS_OP, NULL, $2);}
-                    |   PRINT '(' expression ')'            {$$ = newPrint($3);}
+                    |   PRINT '(' expression ')'            {$$ = newExpression(PRINT_OP, $3, NULL);}
+                    |   READ '(' ')'                        {$$ = newExpression(READ_OP, NULL, NULL);}
                     |   term                                {$$ = $1;}
+                    ;
 
 term        :   BOOL                                    {$$ = newBool($1);}
             |   IDENT                                   {$$ = newSymbol($1);}

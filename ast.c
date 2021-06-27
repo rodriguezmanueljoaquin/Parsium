@@ -170,6 +170,9 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 				parseError("print() may only receive boolean, character, string, or integer type");
 			expType = INTEGER_TYPE;
 			break;
+		case READ_OP:
+			expType = STRING_TYPE;
+			break;
 		default:
 			expType = exp1->type;
 			break;
@@ -280,23 +283,6 @@ Statement *newStatement(StatementType type, Expression *expression) {
 	statement->type = type;
 	statement->data.expression = expression;
 	return statement;
-}
-
-Expression *newPrint(Expression *expression) { return newExpression(PRINT_OP, expression, NULL); }
-
-Statement *newRead(StatementType readType, Expression *expression) {
-	switch (readType) {
-		case READ_CHAR_STMT:
-			/* code */
-		case READ_STRING_STMT:
-		case READ_INT_STMT:
-		case READ_BOOL_STMT:
-
-		default:
-			break;
-	}
-
-	return NULL;
 }
 
 Statement *newBlock(LinkedList *statementList) {

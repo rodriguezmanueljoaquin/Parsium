@@ -6,6 +6,7 @@
 #include <translate.h>
 
 static void printIndentation();
+static void printRead();
 static void translateMachineDefinitions(LinkedList *machines);
 static void translateStatement(Statement *statement);
 static void translateDeclaration(Declaration *declaration);
@@ -17,6 +18,8 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 static void translateMachineStructs(Node *firstState, char *machineSymbol);
 static void translateMachineParser(char *machineSymbol);
 static void translateMachineExecutionFunction(LinkedList *machineStates, char *machineSymbol, char *startNodeSymbol);
+static void translateStringAssignment(char *symbol, Expression *expression);
+static void translateStringDefinition(char *symbol, Expression *expression);
 static void translateBlock(Statement *block);
 static void translateLoop(Loop *loop);
 static void translatePredicates(LinkedList *predicates);
@@ -26,9 +29,17 @@ static size_t indentationLevel = 0;
 
 static char *header = "#include <stdio.h>\n"
 					  "#include <stdbool.h>\n"
+					  "#include <stdlib.h>\n"
+					  "#include <string.h>\n"
+					  "#include <unistd.h>\n"
+					  "#define READ_MAX_LEN 8095\n"
+					  "#define STDIN_FILENO 0\n"
 					  "#define N(x) (sizeof(x) / sizeof((x)[0]))\n"
 					  "#define ANY NULL\n"
-					  "#define " NO_CHAR " 0\n\n";
+					  "#define " NO_CHAR " 0\n\n"
+					  "static char *read_tmp_00 = NULL;\n"
+					  "static int read_tmp_01 = 0;\n"
+					  "static int read_tmp_02 = 0;\n";
 
 void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates) {
 	printf("%s", header);
@@ -142,6 +153,9 @@ static void translateBlock(Statement *block) {
 
 static void translateDeclaration(Declaration *declaration) {
 	printIndentation();
+	if (declaration->value->op == READ_OP)
+		printRead();
+	printIndentation();
 	switch (declaration->type) {
 		case CHAR_TYPE:
 		case CHAR_ARRAY_TYPE:
@@ -179,11 +193,55 @@ static void translateDeclaration(Declaration *declaration) {
 	if (declaration->type == CHAR_ARRAY_TYPE)
 		printf("[]");
 
+	if (declaration->type == STRING_TYPE && declaration->value == NULL) {
+		printf(" = calloc(1, sizeof(char));\n");
+		return;
+	}
+
 	if (declaration->value != NULL) {
 		printf(" = ");
+		if (declaration->type == STRING_TYPE) {
+			translateStringDefinition(declaration->symbol, (Expression *)declaration->value);
+			return;
+		}
 		translateExpression(declaration->value);
 	}
 	printf(";\n");
+}
+
+static void printRead() {
+	printf("read_tmp_00 = calloc(READ_MAX_LEN + 1, sizeof(char));\n"
+		   "read_tmp_01 = read(STDIN_FILENO, read_tmp_00, READ_MAX_LEN);\n"
+		   "if (read_tmp_01 == READ_MAX_LEN) {\n"
+		   "read_tmp_02 = (unsigned char)read_tmp_00[read_tmp_01 - 1];\n"
+		   "while (read_tmp_02 != '\\n' && read_tmp_02 != EOF)\n"
+		   "read_tmp_02 = getchar();\n"
+		   "}\n"
+		   "read_tmp_00[read_tmp_01 - 1] = 0;\n");
+}
+
+static void translateStringAssignment(char *symbol, Expression *expression) {
+	printIndentation();
+	printf("free(%s);\n", symbol);
+	printIndentation();
+	if (expression->op == READ_OP) {
+		printRead();
+		printf("%s = read_tmp_00", symbol);
+	} else {
+		printf("%s = strdup(", symbol);
+		translateExpression(expression);
+		printf(")");
+	}
+}
+
+static void translateStringDefinition(char *symbol, Expression *expression) {
+	if (expression->op == READ_OP) {
+		printf(" read_tmp_00");
+	} else {
+		printf(" strdup(");
+		translateExpression(expression);
+	}
+	printf(");");
 }
 
 static void translateConditional(Conditional *conditional) {
@@ -201,8 +259,14 @@ static void translateConditional(Conditional *conditional) {
 }
 
 static void translateAssignment(Assignment *assignment) {
+	if (assignment->expression->type == STRING_TYPE) {
+		translateStringAssignment(assignment->symbol, assignment->expression);
+		return;
+	}
+
 	printIndentation();
 	printf("%s = ", assignment->symbol);
+
 	translateExpression(assignment->expression);
 }
 
@@ -303,7 +367,8 @@ static void translateExpression(Expression *expression) {
 			printIndentation();
 			printf("printf(");
 			translatePrintType(expression->exp1);
-			printf(");");
+			printf(");\n");
+			printf("fflush(stdout);");
 			break;
 		default:
 			break;
@@ -358,13 +423,13 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 			auxTransition = auxTransitionNode->value;
 			when = NULL_STR;
 			strcpy(character, NO_CHAR);
-			if (auxTransition->condition->character != 0) 
+			if (auxTransition->condition->character != 0)
 				sprintf(character, "'%c'", auxTransition->condition->character);
 			else if (auxTransition->condition->predicate != NULL)
 				when = auxTransition->condition->predicate->symbol;
 			else
 				when = "ANY";
-			
+
 			printIndentation();
 			printf("{.when = %s, .destination = PS_%s_%s, .character = %s},\n", when, machineSymbol, auxTransition->toState,
 				   character);
