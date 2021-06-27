@@ -21,6 +21,7 @@ static void translateBlock(Statement *block);
 static void translateLoop(Loop *loop);
 static void translatePredicates(LinkedList *predicates);
 static void translatePrintType(Expression *expression);
+static void translateGlobalVariables(LinkedList *variables);
 
 static size_t indentationLevel = 0;
 
@@ -30,10 +31,12 @@ static char *header = "#include <stdio.h>\n"
 					  "#define ANY NULL\n"
 					  "#define " NO_CHAR " 0\n\n";
 
-void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates) {
+void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates, LinkedList *globalVariables) {
 	printf("%s", header);
 
-	translatePredicates(predicates); // poner prototipos y luego definirlas
+	translateGlobalVariables(globalVariables);
+
+	translatePredicates(predicates);
 	translateMachineDefinitions(machines);
 
 	Node *currentList = ast->first;
@@ -47,6 +50,15 @@ void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates) {
 	indentationLevel--;
 	printIndentation();
 	printf("}\n");
+}
+
+static void translateGlobalVariables(LinkedList *variables) {
+	Node *aux = variables->first;
+	while (aux != NULL) {
+		translateDeclaration(aux->value);
+		aux = aux->next;
+	}
+	putchar('\n');
 }
 
 static void checkMachineStates(LinkedList *machineStates, MachineType *currentMachine) {

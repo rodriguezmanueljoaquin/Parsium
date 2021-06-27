@@ -6,6 +6,6 @@
 
 #define NO_CHAR "NO_CHAR"
 
-void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates);
+void translate(LinkedList *ast, LinkedList *machines, LinkedList *predicates, LinkedList *globalVariables);
 
 #endif

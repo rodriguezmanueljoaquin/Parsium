@@ -11,6 +11,7 @@
 
 	extern LinkedList *predicates;
 	extern LinkedList *variableScopes;
+    extern LinkedList *globalVaribles;
 
     int yylex_destroy();
     int yylex();
@@ -218,10 +219,11 @@ final_state_array_elem   :   IDENT                            {$$ = newList(); a
 int main(int argc, char *argv[]) {
 	predicates = newList();
     variableScopes = newList();
+    globalVaribles = newList();
     pushScope();
     LinkedList *args[LIST_COUNT] = {0};
     yyparse(args);
     yylex_destroy();
-    translate(args[TREE_LIST], args[MACHINE_LIST], predicates);
+    translate(args[TREE_LIST], args[MACHINE_LIST], predicates, globalVaribles);
     return 0;
 }

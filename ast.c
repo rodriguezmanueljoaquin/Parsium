@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+LinkedList *globalVaribles;
 LinkedList *variableScopes;
 LinkedList *predicates;
 
@@ -105,6 +106,9 @@ TransitionCondition *newTransitionCondition(char *predicate, char character) {
 }
 
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates) {
+	if(peekScope() != variableScopes->first->value)
+		parseError("Machines can only be global");
+
 	Expression *expression = malloc(sizeof(Expression));
 	expression->type = MACHINE_TYPE;
 	expression->op = CONST_OP;
@@ -246,21 +250,28 @@ Statement *newDeclaration(ValueType type, char *symbol, Expression *value) {
 		parseError("Variable already defined");
 
 	checkTypeWithExit(type, value);
-	//	if (type != value->type)
-	//		parseError("Left value type does not match right value type");
-
-	Statement *statement = malloc(sizeof(Statement));
-	statement->data.declaration = malloc(sizeof(Declaration));
-	statement->data.declaration->type = type;
-	statement->data.declaration->symbol = symbol;
-	statement->data.declaration->value = value;
-	statement->type = DECLARE_STMT;
 
 	Variable *var = malloc(sizeof(Variable));
 	var->symbol = symbol;
 	var->type = type;
 
 	addToList(peekScope(), var);
+
+	Declaration *declaration = malloc(sizeof(Declaration));
+	declaration->type = type;
+	declaration->symbol = symbol;
+	declaration->value = NULL;
+
+	if (peekScope() == variableScopes->first->value && type != MACHINE_TYPE && type != PREDICATE_TYPE) {
+		addToList(globalVaribles, declaration);
+		return newAssignment(symbol, value);
+	}
+	
+	Statement *statement = malloc(sizeof(Statement));
+	statement->data.declaration = declaration;
+	statement->data.declaration->value = value;
+	statement->type = DECLARE_STMT;
+
 	return statement;
 }
 
@@ -309,6 +320,8 @@ Statement *newBlock(LinkedList *statementList) {
 void newPredicate(char *symbol, char *parameter, Statement *block) {
 	if (findPredicate(symbol) != NULL)
 		parseError("Predicate already defined");
+	if(peekScope() != variableScopes->first->value)
+		parseError("Predicates can only be global");
 
 	Predicate *predicate = malloc(sizeof(Predicate));
 	predicate->symbol = symbol;
