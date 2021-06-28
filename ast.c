@@ -8,13 +8,15 @@ LinkedList *globalVaribles;
 LinkedList *variableScopes;
 LinkedList *predicates;
 
+extern int yylineno;
+
 void parseError(char *message);
 static void checkTypeWithExit(ValueType type, Expression *value);
 static bool checkType(ValueType type, Expression *value);
 static bool checkDefaultPredicates(char *symbol);
 
 void parseError(char *message) {
-	fprintf(stderr, "Syntax error: %s\n", message);
+	fprintf(stderr, "line %d: Syntax error: %s\n", yylineno, message);
 	exit(-1);
 }
 
@@ -97,7 +99,7 @@ TransitionCondition *newTransitionCondition(char *predicate, char character) {
 	if (predicate != NULL) {
 		aux = findPredicate(predicate);
 		if (aux == NULL)
-			parseError("Predicate undefined");
+			parseError("Undefined predicate");
 	}
 
 	condition->predicate = aux;
@@ -146,7 +148,7 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 				expType = BOOL_TYPE;
 				break;
 			} else
-				parseError("Error: Only comparable types are char and int");
+				parseError("Only comparable types are char and int");
 		case MULT_OP:
 		case DIV_OP:
 		case MOD_OP:
@@ -195,7 +197,7 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 Expression *newParseExpression(char *machineSymbol, char *string) {
 	Variable *var = findVariable(machineSymbol);
 	if (var == NULL)
-		parseError("Machine undefined");
+		parseError("Undefined machine");
 	if (var->type != MACHINE_TYPE)
 		parseError("Variable type conflict in parse");
 
@@ -222,7 +224,7 @@ Statement *newConditional(Expression *condition, Statement *affirmative, Stateme
 
 static void checkTypeWithExit(ValueType type, Expression *value) {
 	if (!checkType(type, value))
-		parseError("Assignment conflict");
+		parseError("Type conflict");
 }
 
 static bool checkType(ValueType type, Expression *value) {
@@ -237,7 +239,7 @@ static bool checkType(ValueType type, Expression *value) {
 Statement *newAssignment(char *symbol, Expression *value) {
 	Variable *var = findVariable(symbol);
 	if (var == NULL)
-		parseError("Variable undefined");
+		parseError("Undefined variable");
 
 	checkTypeWithExit(var->type, value);
 
@@ -383,9 +385,9 @@ Predicate *findPredicate(char *symbol) {
 
 Expression *newPredicateCall(char *symbol, char *parameter, char character) {	
 	if (findPredicate(symbol) == NULL)
-		parseError("Predicate not defined");
+		parseError("Undefined predicate");
 	if (parameter != NULL && findVariable(parameter) == NULL)
-		parseError("Variable not defined");
+		parseError("Undefined variable");
 
 	PredicateCall *call = malloc(sizeof(PredicateCall));
 	call->symbol = symbol;
