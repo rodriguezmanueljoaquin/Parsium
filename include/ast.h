@@ -155,7 +155,7 @@ Expression *newBool(bool b);
 Expression *newInteger(long number);
 Expression *newArray(LinkedList *list, ValueType type);
 Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2);
-Expression *newParseExpression(char *machineSymbol, char *string);
+Expression *newParseExpression(char *machineSymbol, Expression *input);
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates);
 Expression *newPredicateCall(char *symbol, char *parameter, char character);
 Transition *newTransition(char *fromState, char *toState, TransitionCondition *when);

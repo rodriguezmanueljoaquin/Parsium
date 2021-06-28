@@ -134,7 +134,7 @@ expression  :   binary_operation						{$$ = $1;}
             |   predicate                               {$$ = $1;}
 			|	array						            {$$ = $1;}
             |   machine                                 {$$ = $1;}
-            |   PARSE STRING WITH IDENT                 {$$ = newParseExpression($4, $2);}
+            |   PARSE term WITH IDENT                   {$$ = newParseExpression($4, $2);}
             ;
 
 predicate   :   IDENT '(' IDENT ')'                     {$$ = newPredicateCall($1, $3, 0);}

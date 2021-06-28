@@ -370,7 +370,11 @@ static void translateExpression(Expression *expression) {
 			break;
 		case PARSE_OP:
 			printIndentation();
-			printf("run_machine_%s(\"%s\")", (char *)expression->exp1->value, (char *)expression->exp2->value);
+			printf("run_machine_%s", (char *)expression->exp1->value);
+			if(expression->exp2->type == STRING_TYPE)
+				printf("(\"%s\")", (char *)expression->exp2->value);
+			else
+				printf("(%s)", (char *)expression->exp2->value);
 			break;
 		case EXEC_OP:
 			translateCall(expression->value);

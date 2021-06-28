@@ -194,7 +194,7 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 	return expression;
 }
 
-Expression *newParseExpression(char *machineSymbol, char *string) {
+Expression *newParseExpression(char *machineSymbol, Expression *input) {
 	Variable *var = findVariable(machineSymbol);
 	if (var == NULL)
 		parseError("Undefined machine");
@@ -205,7 +205,17 @@ Expression *newParseExpression(char *machineSymbol, char *string) {
 	expression->type = BOOL_TYPE;
 	expression->op = PARSE_OP;
 	expression->exp1 = newSymbol(machineSymbol);
-	expression->exp2 = newString(string);
+
+	switch (input->type)
+	{
+	case STRING_TYPE:
+	case SYMBOL_TYPE:
+		expression->exp2 = input;
+		break;
+	default:
+		parseError("Parsing can only be done with a string");
+		break;
+	}
 
 	return expression;
 }

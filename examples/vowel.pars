@@ -1,0 +1,24 @@
+def predicate vowel = (x) {
+    return  x == 'a' || x == 'e' || x == 'i' || x == 'o' || x == 'u' ||
+            x == 'A' || x == 'E' || x == 'I' || x == 'O' || x == 'U';
+};
+
+def machine m = <<
+    transitions = [
+        start->final    when vowel,
+        final->final    when vowel
+    ],
+    initialState = start,
+    finalStates = [final]
+>>;
+
+print("This machine only accepts vowels, enter your string: ");
+def string input;
+input = read();
+def bool result = parse input with m;
+print(input);
+if (result) {
+    print(" was accepted!\n");
+} else {
+    print(" was rejected!\n");
+}
