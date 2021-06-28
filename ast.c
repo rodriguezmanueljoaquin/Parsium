@@ -135,8 +135,14 @@ Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2) 
 		case NOT_OP:
 			checkTypeWithExit(BOOL_TYPE, exp1);
 		case PARSE_OP:
+			expType = BOOL_TYPE;
+			break;
 		case EQ_OP:
 		case NE_OP:
+			if (checkType(MACHINE_TYPE, exp1) || checkType(MACHINE_TYPE, exp2) || 
+				checkType(PREDICATE_TYPE, exp1) || checkType(PREDICATE_TYPE, exp2) ||
+				checkType(STRING_TYPE, exp1) || checkType(STRING_TYPE, exp2))
+					parseError("Types used in comparison cannot be compared");
 			expType = BOOL_TYPE;
 			break;
 		case GT_OP:

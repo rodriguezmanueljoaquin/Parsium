@@ -32,20 +32,35 @@ def machine email = <<
     finalStates = [final]
 >>;
 
-print("Validos:\n");
-parse "person@gmail.com" with email;
-parse "alumno@itba.edu.ar" with email;
-parse "abc-d@mail.com" with email;
-parse "abc.def@mail.com" with email;
-parse "abc_def@mail.com" with email;
-parse "abc.def@mail-archive.com" with email;
+def bool result = true;
 
-print("Invalidos:\n");
-parse "abc-@mail.com" with email;
-parse ".abc@mail.com" with email;
-parse "abc..def@mail.com" with email;
-parse "abc#def@mail.com" with email;
-parse "abc.def@mail.c" with email;
-parse "abc.def@mail#archive.com" with email;
-parse "abc.def@mail" with email;
-parse "abc.def@mail..com" with email;
+print("Checking emails...\n");
+
+// Validos
+result = result && parse "person@gmail.com" with email;
+result = result && parse "alumno@itba.edu.ar" with email;
+result = result && parse "abc-d@mail.com" with email;
+result = result && parse "abc.def@mail.com" with email;
+result = result && parse "abc_def@mail.com" with email;
+result = result && parse "abc.def@mail-archive.com" with email;
+if (result) {
+    print("Valid emails were accepted!\n");
+} else {
+    print("Valid emails were rejected!\n");
+}
+
+// Invalidos
+result = false;
+result = result || parse "abc-@mail.com" with email;
+result = result || parse ".abc@mail.com" with email;
+result = result || parse "abc..def@mail.com" with email;
+result = result || parse "abc#def@mail.com" with email;
+result = result || parse "abc.def@mail.c" with email;
+result = result || parse "abc.def@mail#archive.com" with email;
+result = result || parse "abc.def@mail" with email;
+result = result || parse "abc.def@mail..com" with email;
+if (result) {
+    print("Invalid emails were accepted!\n");
+} else {
+    print("Invalid emails were rejected!\n");
+}

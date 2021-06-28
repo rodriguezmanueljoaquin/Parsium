@@ -16,7 +16,44 @@ def machine dni = <<
     finalStates = [final]
 >>;
 
-parse "11.222.333" with dni;
-parse "11.222" with dni;
-parse "11.222.333.444" with dni;
-parse "111.222.333" with dni;
+def string input;
+def bool result;
+
+print("Checking...\n");
+
+input = "11.222.333";
+result = parse input with dni;
+print(input);
+if (result) {
+    print(" was accepted!\n");
+} else {
+    print(" was rejected!\n");
+}
+
+input = "11.222";
+result = parse input with dni;
+print(input);
+if (result) {
+    print(" was accepted!\n");
+} else {
+    print(" was rejected!\n");
+}
+
+input = "11.222.333.444";
+result = parse input with dni;
+print(input);
+if (result) {
+    print(" was accepted!\n");
+} else {
+    print(" was rejected!\n");
+}
+
+input = "111.222.333";
+result = parse input with dni;
+print(input);
+if (result) {
+    print(" was accepted!\n");
+} else {
+    print(" was rejected!\n");
+}
+

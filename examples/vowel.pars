@@ -12,13 +12,16 @@ def machine m = <<
     finalStates = [final]
 >>;
 
-print("This machine only accepts vowels, enter your string: ");
 def string input;
-input = read();
-def bool result = parse input with m;
-print(input);
-if (result) {
-    print(" was accepted!\n");
-} else {
-    print(" was rejected!\n");
+def bool b = true;
+while(true) {
+    print("This machine only accepts vowels, enter your string: ");
+    input = read();
+    def bool result = parse input with m;
+    print(input);
+    if (result) {
+        print(" was accepted!\n");
+    } else {
+        print(" was rejected!\n");
+    }
 }

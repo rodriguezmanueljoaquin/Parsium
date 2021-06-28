@@ -1,0 +1,26 @@
+//  Esta maquina sólo acepta caracteres especiales (no acepta numeros ni letras)
+
+def predicate special = (x) {
+    return !isNumber(x) && !isLowerCase(x) && !isUpperCase(x);
+};
+
+def machine m = <<
+    transitions = [
+        start->start    when special
+    ],
+    initialState = start,
+    finalStates = [start]
+>>;
+
+def string input;
+while(true) {
+    print("This machine does not accept letter and numbers, enter your string: ");
+    input = read();
+    def bool result = parse input with m;
+    print(input);
+    if (result) {
+        print(" was accepted!\n");
+    } else {
+        print(" was rejected!\n");
+    }
+}
