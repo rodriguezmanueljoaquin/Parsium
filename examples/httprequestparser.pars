@@ -1,0 +1,178 @@
+def int max_method_length = 24;
+def int max_ip_length = 45;
+def int max_domain_length = 255;
+def int max_header_type_length = 64;
+def int max_header_value_length = 1024;
+
+def int method_length = 0;
+def int ip_length = 0;
+def int domain_length = 0;
+def int header_type_length = 0;
+def int header_value_length = 0;
+
+def predicate check_method_length = (x) {
+	if(method_length > max_method_length) {
+		print("method exceeds maximum length\n");
+		return true;
+	}
+	return false;
+};
+
+def predicate increase_method_length = (x) {
+	method_length = method_length + 1;
+	return true;
+};
+
+def predicate check_ip_length = (x) {
+	if(ip_length > max_ip_length) {
+		print("ip exceeds maximum length\n");
+		return true;
+	}
+	return false;
+};
+
+def predicate increase_ip_length = (x) {
+	if(isNumber(x) || x == '.' || x == ':' || x == '[' || x == ']'){
+		ip_length = ip_length + 1;
+		return true;
+	}
+	return false;
+};
+
+def predicate check_domain_length = (x) {
+	if(domain_length > max_domain_length) {
+		print("domain exceeds maximum length\n");
+		return true;
+	}
+	return false;
+};
+
+def predicate increase_domain_length = (x) {
+	domain_length = domain_length + 1;
+	return true;
+};
+
+def predicate check_header_type_length = (x) {
+	if(header_type_length > max_header_type_length) {
+		print("header_type exceeds maximum length\n");
+		return true;
+	}
+	return false;
+};
+
+def predicate increase_header_type_length = (x) {
+	header_type_length = header_type_length + 1;
+	return true;
+};
+
+def predicate check_header_value_length = (x) {
+	if(header_value_length > max_header_value_length) {
+		print("header_value exceeds maximum length\n");
+		return true;
+	}
+	return false;
+};
+
+def predicate increase_header_value_length = (x) {
+	header_value_length = header_value_length + 1;
+	return true;
+};
+
+def predicate reset_headers_counters = (x) {
+	if(x == '\n') {
+		header_type_length = 0;
+		header_value_length = 0;
+		return true;
+	}
+	return false;
+};
+
+def machine http_parser = <<
+    transitions = [ method->ERROR						when check_method_length, 
+					method->schema 						when ' ',
+					method->method 						when increase_method_length,
+
+					schema->version						when '*',
+					schema->relative_path				when '/',
+					schema->schema_h 					when 'h',	
+					schema_h->schema_t1 				when 't',	
+					schema_t1->schema_t2 				when 't',	
+					schema_t2->schema_p 				when 'p',	
+					schema_p->path 						when ':',
+
+					path->ip							when increase_ip_length,
+					path->domain						when increase_domain_length,
+
+					domain->ERROR						when check_domain_length,
+					domain->relative_path				when '/',
+					domain->port						when ':',
+					domain->version						when ' ',
+					domain->domain						when increase_domain_length,
+
+					ip->ERROR 							when check_ip_length,
+					ip->port 							when ':',
+					ip->relative_path					when '/',
+					ip->version							when ' ',
+					ip->ip 								when increase_ip_length,
+
+					relative_path->port					when ':',
+					relative_path->version				when ' ',
+					relative_path->relative_path		when ANY,
+
+					port->relative_path					when '/',
+					port->version						when ' ',
+					port->port 							when isNumber,
+					port->port 							when '.',
+
+					version->CR_v						when '\r',
+					version->version					when ANY,
+
+					CR_v->LF							when '\n',
+					CR_v->version						when ANY,
+
+					LF->CR_2							when '\r',
+					LF->header_type						when ANY,
+
+					header_type->ERROR					when check_header_type_length,
+					header_type->header_value			when ':',
+					header_type->header_type			when increase_header_type_length,
+					
+					header_value->ERROR					when check_header_value_length,
+					header_value->CR_h					when '\r',
+					header_value->header_value			when increase_header_value_length,
+
+					CR_h->LF							when reset_headers_counters,
+					CR_h->header_value					when increase_header_value_length,
+
+					CR_2->LF_2							when '\n',
+					CR_2->header_type					when ANY
+
+				], 
+    initialState = method, 
+    finalStates = [LF_2]
+    >>;
+
+def bool accepted;
+
+def string request1 = "CONNECT http:127.0.0.1/paw-2021a-03:8080 HTTP/1.1\r\n\r\n";
+accepted = parse request1 with http_parser;
+
+print("Parsing request:\n");
+print(request1);
+if(accepted) {
+	print("Request accepted\n\n");
+}else{
+	print("Request rejected\n\n");
+}
+
+def string request2 = "GET /paw-2021a-03/ HTTP/1.1\r\nHost: pawserver.it.itba.edu.ar\r\nConnection: keep-alive\r\nPragma: no-cache\r\nCache-Control: no-cache\r\nUpgrade-Insecure-Requests: 1\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: es-419,es;q=0.9,en;q=0.8\r\nCookie: JSESSIONID=816DA96D11349339217EA7EA3D659542; _ga=GA1.1.1645275030.1624227746; _ga_X0CENPJTZ6=GS1.1.1624813595.6.1.1624813613.0\r\n\r\n";
+
+accepted = parse request2 with http_parser;
+
+print("Parsing request:\n");
+print(request2);
+if(accepted) {
+	print("Request accepted\n\n");
+}else{
+	print("Request rejected\n\n");
+}

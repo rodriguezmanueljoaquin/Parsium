@@ -28,6 +28,7 @@ static void translatePrintType(Expression *expression);
 static void translateGlobalVariables(LinkedList *variables);
 static void translateDefaultPredicates();
 static void translateCall(PredicateCall *call);
+static void print_char(char c);
 
 static size_t indentationLevel = 0;
 static bool isInitializing = true;
@@ -192,16 +193,12 @@ static void translateDeclaration(Declaration *declaration) {
 		case MACHINE_TYPE:
 			return;
 		case PREDICATE_TYPE:
-			// TODO: hacer
 			break;
 		case TRANSITION_TYPE:
-			// TODO: hacer
 			break;
 		case TRANSITION_ARRAY_TYPE:
-			// TODO: hacer
 			break;
 		case STATE_ARRAY_TYPE:
-			// TODO: hacer
 			break;
 		default:
 			printf("\n error translateDeclaration() \n");
@@ -371,7 +368,7 @@ static void translateExpression(Expression *expression) {
 		case PARSE_OP:
 			printIndentation();
 			printf("run_machine_%s", (char *)expression->exp1->value);
-			if(expression->exp2->type == STRING_TYPE)
+			if (expression->exp2->type == STRING_TYPE)
 				printf("(\"%s\")", (char *)expression->exp2->value);
 			else
 				printf("(%s)", (char *)expression->exp2->value);
@@ -397,10 +394,28 @@ static void translateExpression(Expression *expression) {
 	}
 }
 
+static void print_char(char c) {
+	switch (c) {
+		case '\n':
+			printf("'\\n'");
+			break;
+		case '\r':
+			printf("'\\r'");
+			break;
+		case '\t':
+			printf("'\\t'");
+			break;
+		default:
+			printf("'%c'", c);
+			break;
+	}
+}
+
 static void translateConstant(ValueType type, void *value) {
 	switch (type) {
 		case CHAR_TYPE:
-			printf("'%c'", *(char *)value);
+			print_char(*(char *)value);
+			// printf("'%c'", *(char *)value);
 			break;
 		case BOOL_TYPE:
 			printf("%s", (*(bool *)value) ? "true" : "false");
@@ -565,21 +580,22 @@ static void translateMachineParser(char *machineSymbol) {
 	printf("if (states_%s[current_state][j].character != NO_CHAR) {\n", machineSymbol);
 
 	indentationLevel++;
-		printIndentation();
-		printf("if (current_char == states_%s[current_state][j].character) {\n", machineSymbol);
-		indentationLevel++;
-		printIndentation();
-		printf("current_state = states_%s[current_state][j].destination;\n", machineSymbol);
-		printIndentation();
-		printf("break;}\n");
-		indentationLevel--;
+	printIndentation();
+	printf("if (current_char == states_%s[current_state][j].character) {\n", machineSymbol);
+	indentationLevel++;
+	printIndentation();
+	printf("current_state = states_%s[current_state][j].destination;\n", machineSymbol);
+	printIndentation();
+	printf("break;}\n");
+	indentationLevel--;
 	indentationLevel--;
 
 	printIndentation();
-	printf( "} else if (states_%s[current_state][j].when == ANY || states_%s[current_state][j].when(current_char)){\n", machineSymbol, machineSymbol);
+	printf("} else if (states_%s[current_state][j].when == ANY || states_%s[current_state][j].when(current_char)){\n",
+		   machineSymbol, machineSymbol);
 	indentationLevel++;
 	printIndentation();
-	printf( "current_state = states_%s[current_state][j].destination;\n", machineSymbol);
+	printf("current_state = states_%s[current_state][j].destination;\n", machineSymbol);
 	printIndentation();
 	printf("break;}\n");
 	indentationLevel--;
@@ -635,8 +651,6 @@ static void translateMachineExecutionFunction(LinkedList *machineStates, char *m
 	printIndentation();
 	printf("}\n\n");
 
-	printIndentation();
-	printf("printf(\"%%s is %%s by the machine %s\\n\", parse, accepted ? \"accepted\" : \"rejected\");\n\n", machineSymbol);
 	printIndentation();
 	printf("return accepted;\n");
 
@@ -733,7 +747,7 @@ static void translateDefaultPredicates() {
 }
 
 static void translateCall(PredicateCall *call) {
-	if(call->parameter != NULL)
+	if (call->parameter != NULL)
 		printf("%s(%s)", call->symbol, call->parameter);
 	else
 		printf("%s('%c')", call->symbol, call->character);
