@@ -1,0 +1,51 @@
+//  Parser para direcciones de email segun el formato: https://help.xmatters.com/ondemand/trial/valid_email_format.htm
+//  (solo tomamos lowercase characters)
+
+def predicate prefixChar = (c) {
+    return isNumber(c) || isLowerCase(c);
+};
+
+def predicate prefixSpecial = (c) {
+    return c == '.' || c == '-' || c == '_';
+};
+
+def predicate domainChar = (c) {
+    return prefixChar(c) || c == '-';
+};
+
+def machine email = <<
+    transitions = [ 
+        start->prefix       when prefixChar,
+        prefix->prefix      when prefixChar,
+        prefix->special     when prefixSpecial,
+        special->prefix     when prefixChar,
+        prefix->domainS     when '@',
+        domainS->domain     when domainChar,
+        domain->domain      when domainChar,
+        domain->dot         when '.',
+        dot->dot1           when isLowerCase,
+        dot1->final         when isLowerCase,
+        final->final        when isLowerCase,
+        final->dot          when '.'
+    ], 
+    initialState = start, 
+    finalStates = [final]
+>>;
+
+print("Validos:\n");
+parse "person@gmail.com" with email;
+parse "alumno@itba.edu.ar" with email;
+parse "abc-d@mail.com" with email;
+parse "abc.def@mail.com" with email;
+parse "abc_def@mail.com" with email;
+parse "abc.def@mail-archive.com" with email;
+
+print("Invalidos:\n");
+parse "abc-@mail.com" with email;
+parse ".abc@mail.com" with email;
+parse "abc..def@mail.com" with email;
+parse "abc#def@mail.com" with email;
+parse "abc.def@mail.c" with email;
+parse "abc.def@mail#archive.com" with email;
+parse "abc.def@mail" with email;
+parse "abc.def@mail..com" with email;
