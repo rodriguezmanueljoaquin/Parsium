@@ -455,7 +455,8 @@ static void translateMachineStates(Node *firstState, char *machineSymbol, Linked
 		indentationLevel++;
 		Node *auxTransitionNode = auxStateValue->transitions->first;
 		Transition *auxTransition;
-		char *when, *character = malloc(strlen(NO_CHAR));
+		char *when, *character = malloc(strlen(NO_CHAR) + 1);
+		character[7] = 0;
 		for (size_t j = 0; auxTransitionNode != NULL; auxTransitionNode = auxTransitionNode->next, j++) {
 			auxTransition = auxTransitionNode->value;
 			when = NULL_STR;

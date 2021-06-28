@@ -43,9 +43,9 @@
 %parse-param { LinkedList **args }
 
 %type <valuetype> type
-%type <expression> term expression binary_operation unary_operation array machine predicate
+%type <expression> term expression binary_operation unary_operation machine predicate
 %type <statement> definition declaration basic_statement statement assignment block
-%type <linkedlist> S statement_list char_array_elem char_array transition_array_elem transition_array final_state_array_elem final_state_array
+%type <linkedlist> S statement_list transition_array_elem transition_array final_state_array_elem final_state_array
 %type <transition> transition
 %type <transitionCondition> transition_when
 
@@ -132,7 +132,6 @@ assignment  :   IDENT ASSIGN expression                 {$$ = newAssignment($1, 
 expression  :   binary_operation						{$$ = $1;}
             |   unary_operation                         {$$ = $1;}
             |   predicate                               {$$ = $1;}
-			|	array						            {$$ = $1;}
             |   machine                                 {$$ = $1;}
             |   PARSE term WITH IDENT                   {$$ = newParseExpression($4, $2);}
             ;
@@ -179,15 +178,6 @@ type        :   BOOL_DEF                                {$$ = BOOL_TYPE;}
 			|	INTEGER_DEF								{$$ = INTEGER_TYPE;}
             |   STRING_DEF                              {$$ = STRING_TYPE;}
 			;
-
-array		:	char_array					            {$$ = newArray($1, CHAR_ARRAY_TYPE);}
-
-char_array  :  '[' char_array_elem ']'                  {$$ = $2;}
-            ;
-
-char_array_elem :   CHAR               				    {$$ = newList(); addToList($$, newChar($1));}
-            |   char_array_elem ',' CHAR    		    {addToList($$,newChar($3));}
-            ;
 
 machine     :   MACHINE_OPEN TRANSITIONS_DEF ASSIGN transition_array ',' INITIAL_STATE_DEF ASSIGN IDENT ',' FINAL_STATES_DEF ASSIGN final_state_array MACHINE_CLOSE {$$ = newMachine($4, $8, $12);}
             ;

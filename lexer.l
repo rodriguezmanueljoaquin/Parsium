@@ -18,7 +18,6 @@
 [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 [/][*]				            	{ yy_fatal_error("Unterminated comment"); }
 char                            	return CHAR_DEF;
-char\[\]							return CHAR_ARRAY_DEF;
 bool                            	return BOOL_DEF;
 def                             	return DEFINE;
 machine							    return MACHINE_DEF;

@@ -1,5 +1,5 @@
 CFLAGS= -std=gnu99 -pedantic -pedantic-errors -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -Wno-implicit-fallthrough -g
-YFLAGS= -v -d
+YFLAGS= -d
 LLFLAG= -ll
 
 LEX_SOURCE= lexer.l
@@ -23,6 +23,6 @@ compiler_fsanitize:
 	$(CC) $(CFLAGS) -I./include $(C_SOURCES) $(LYFLAG) -fsanitize=address -o pc
 
 clean:
-	rm -rf pc *.o lex.yy.c y.output y.tab.c y.tab.h 
+	rm -rf pc *.o lex.yy.c y.tab.c y.tab.h 
 
 .PHONY: all fsanitize clean

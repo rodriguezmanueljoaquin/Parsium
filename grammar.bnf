@@ -1,0 +1,56 @@
+; Grammar
+    <S> ::=  <S> <statement> | ""
+
+    <statement_list> ::=  <statement_list> <statement> | ""
+
+    <statement> ::=     <basic_statement> ';' | ';' | <assignment> ';' | <expression> ';'
+                |       "if" '(' <expression> ')' <block> "else" <block> | "if" '(' <expression> ')' block
+                |       "while" '(' <expression> ')' block
+
+    <block> ::=  '{' <statement_list> '}'
+
+    <basic_statement> ::=  <declaration> | <definition> | "return" expression
+
+    <declaration> ::=  "def" <type> IDENT
+
+    <definition> ::=  "def" <type> IDENT '=' expression | "def" "predicate" IDENT '=' '(' IDENT ')' block
+
+    <assignment> ::=  IDENT '=' expression
+
+    <expression> ::=  <binary_operation> | <unary_operation> | <predicate> | <machine> | "parse" <term> "with" IDENT
+
+    <predicate> ::=  IDENT '(' IDENT ')' | IDENT '(' CHAR ')'
+
+    <binary_operation> ::=  <expression> "||" <expression> | <expression> "&&" <expression> | <expression> "==" expression
+                        | <expression> "!=" <expression> | <expression> '+' <expression> | <expression> '-' expression
+                        | <expression> '*' <expression> | <expression> '/' <expression> | <expression> '%' expression
+                        | <expression> '>' <expression> | <expression> '<' <expression> | <expression> ">=" expression
+                        | <expression> "<=" expression
+
+    <unary_operation> ::=  '(' <expression> ')' | '!' <expression> | '-' expression
+                        | '+' <expression> | "print" '(' <expression> ')' | "read" '(' ')' | term
+
+    <term> ::=  BOOL | IDENT | CHAR | STRING | INTEGER
+
+    <type> ::=  "bool" | "char" | "machine" | "int" | "string"
+
+    <machine> ::=  "<<" "transitions" "=" <transition_array> ',' "initialState" "=" IDENT ',' "finalStates" "=" <final_state_array> ">>"
+
+    <transition_array> ::=  '[' <transition_array_elem> ']'
+
+    <transition_array_elem> ::=  <transition> | <transition_array_elem> ',' transition
+
+    <transition> ::=  IDENT "->" IDENT "when" transition_when
+
+    <transition_when> ::=  IDENT | CHAR | "ANY"
+
+    <final_state_array> ::=  '[' <final_state_array_elem> ']'
+
+    <final_state_array_elem> ::=  IDENT | <final_state_array_elem> ',' IDENT
+
+; Donde los terminales son:
+; BOOL      : true | false
+; IDENT     : nombre de variable
+; CHAR      : cualquier caracter
+; STRING    : cadena entre comillas dobles
+; INTEGER   : numero entero

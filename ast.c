@@ -73,15 +73,6 @@ Expression *newBool(bool b) {
 	return expression;
 }
 
-Expression *newArray(LinkedList *list, ValueType type) {
-	Expression *expression = malloc(sizeof(Expression));
-	expression->type = type;
-	expression->op = CONST_OP;
-	expression->value = list;
-
-	return expression;
-}
-
 Transition *newTransition(char *fromState, char *toState, TransitionCondition *when) {
 	Transition *transition = malloc(sizeof(Transition));
 

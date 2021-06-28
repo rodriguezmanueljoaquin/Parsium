@@ -153,7 +153,6 @@ Expression *newString(char *string);
 Expression *newChar(char c);
 Expression *newBool(bool b);
 Expression *newInteger(long number);
-Expression *newArray(LinkedList *list, ValueType type);
 Expression *newExpression(OperationType op, Expression *exp1, Expression *exp2);
 Expression *newParseExpression(char *machineSymbol, Expression *input);
 Expression *newMachine(LinkedList *transitions, char *initialState, LinkedList *finalStates);
@@ -165,7 +164,6 @@ Statement *newAssignment(char *symbol, Expression *value);
 Statement *newDeclaration(ValueType type, char *symbol, Expression *value);
 Statement *newLoop(Expression *condition, Statement *block, char *init, char *increment);
 Statement *newStatement(StatementType type, Expression *expression);
-// Statement *newRead(Expression *expression);
 Statement *newBlock(LinkedList *statementList);
 void newPredicate(char *symbol, char *parameter, Statement *block);
 
