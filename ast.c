@@ -305,6 +305,9 @@ Statement *newLoop(Expression *condition, Statement *block, char *init, char *in
 }
 
 Statement *newStatement(StatementType type, Expression *expression) {
+	if (type == RETURN_STMT)
+		checkTypeWithExit(BOOL_TYPE, expression);
+		
 	Statement *statement = malloc(sizeof(Statement));
 	statement->type = type;
 	statement->data.expression = expression;
